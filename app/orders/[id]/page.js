@@ -1,8 +1,10 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function OrderDetails({ params }) {
+  const router = useRouter();
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showSupportModal, setShowSupportModal] = useState(false);
@@ -35,7 +37,7 @@ export default function OrderDetails({ params }) {
   return (
     <div className="p-4">
       <div className="flex items-center mb-4">
-        <button className="mr-2">
+        <button onClick={() => router.back()} className="mr-2">
           <svg
             className="w-6 h-6 text-gray-600"
             fill="none"
@@ -50,16 +52,35 @@ export default function OrderDetails({ params }) {
             />
           </svg>
         </button>
-        <h1 className="text-2xl font-bold">Order #1234</h1>
+        <h1 className="text-2xl font-bold">Order #{params.id}</h1>
+      </div>
+
+      {/* Timer and Status Bar */}
+      <div className="bg-blue-50 p-4 rounded-lg mb-4">
+        <div className="flex justify-between items-center">
+          <div>
+            <p className="text-sm text-blue-600">Time Remaining</p>
+            <p className="text-2xl font-bold text-blue-800">15:00</p>
+          </div>
+          <div className="text-right">
+            <span className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded">
+              In Progress
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Order Status */}
       <div className="bg-white rounded-lg shadow p-4 mb-4">
         <div className="flex justify-between items-center mb-4">
-          <span className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded">
-            In Progress
-          </span>
-          <span className="text-lg font-bold">₹950.00</span>
+          <div>
+            <span className="text-lg font-bold">₹950.00</span>
+            <p className="text-sm text-gray-500">Cash on Delivery</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-gray-600">Order Time</p>
+            <p className="font-medium">2:30 PM</p>
+          </div>
         </div>
         <div className="space-y-2">
           <div className="flex items-center text-sm">
@@ -76,7 +97,7 @@ export default function OrderDetails({ params }) {
                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <span>Ordered at: 2:30 PM</span>
+            <span>Expected delivery by 3:00 PM</span>
           </div>
           <div className="flex items-center text-sm">
             <svg
@@ -89,10 +110,35 @@ export default function OrderDetails({ params }) {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth="2"
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
               />
             </svg>
-            <span>Expected delivery: 3:00 PM</span>
+            <span>3.5 km total distance</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Order Items */}
+      <div className="bg-white rounded-lg shadow p-4 mb-4">
+        <h2 className="font-semibold mb-3">Order Items</h2>
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-medium">2x Large Pizza</p>
+              <p className="text-sm text-gray-500">Extra cheese, Mushrooms</p>
+            </div>
+            <span className="text-gray-600">₹600</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-medium">1x Garlic Bread</p>
+              <p className="text-sm text-gray-500">With cheese dip</p>
+            </div>
+            <span className="text-gray-600">₹150</span>
+          </div>
+          <div className="border-t pt-2 flex justify-between font-medium">
+            <span>Total Items: 3</span>
+            <span>₹750</span>
           </div>
         </div>
       </div>
@@ -120,12 +166,19 @@ export default function OrderDetails({ params }) {
                 </svg>
               </div>
             </div>
-            <div>
-              <p className="font-medium">Pickup Location</p>
-              <p className="text-sm text-gray-600">
-                123 Restaurant Street, Mumbai
+            <div className="flex-1">
+              <div className="flex justify-between">
+                <div>
+                  <p className="font-medium">Pizza Hub</p>
+                  <p className="text-sm text-gray-600">
+                    123 Restaurant Street, Mumbai
+                  </p>
+                </div>
+                <button className="text-blue-600 text-sm">Navigate</button>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">
+                Contact: +91 98765 43210
               </p>
-              <p className="text-sm text-gray-500">Contact: +91 98765 43210</p>
             </div>
           </div>
 
@@ -151,66 +204,91 @@ export default function OrderDetails({ params }) {
                 </svg>
               </div>
             </div>
-            <div>
-              <p className="font-medium">Drop Location</p>
-              <p className="text-sm text-gray-600">
-                456 Customer Avenue, Mumbai
+            <div className="flex-1">
+              <div className="flex justify-between">
+                <div>
+                  <p className="font-medium">Customer Location</p>
+                  <p className="text-sm text-gray-600">
+                    456 Customer Avenue, Mumbai
+                  </p>
+                </div>
+                <button className="text-blue-600 text-sm">Navigate</button>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">
+                Contact: +91 98765 43211
               </p>
-              <p className="text-sm text-gray-500">Contact: +91 98765 43211</p>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Order Details */}
-      <div className="bg-white rounded-lg shadow p-4 mb-4">
-        <h2 className="font-semibold mb-4">Order Details</h2>
-        <div className="space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Order Type</span>
-            <span>Food Delivery</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Payment Method</span>
-            <span>Online Payment</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Distance</span>
-            <span>3.5 km</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Items</span>
-            <span>4 items</span>
           </div>
         </div>
       </div>
 
       {/* Customer Notes */}
       <div className="bg-white rounded-lg shadow p-4 mb-4">
-        <h2 className="font-semibold mb-2">Customer Notes</h2>
-        <p className="text-sm text-gray-600">
-          Please deliver to the security gate. Call when reached.
-        </p>
+        <h2 className="font-semibold mb-2">Delivery Instructions</h2>
+        <div className="bg-yellow-50 p-3 rounded-lg">
+          <p className="text-sm text-yellow-800">
+            Please deliver to the security gate. Call when reached.
+          </p>
+        </div>
       </div>
 
       {/* Action Buttons */}
       <div className="space-y-3">
         <button
           onClick={() => setShowDeliveryModal(true)}
-          className="w-full bg-green-500 text-white py-3 rounded-lg font-medium"
+          className="w-full bg-green-500 text-white py-3 rounded-lg font-medium flex items-center justify-center"
         >
+          <svg
+            className="w-5 h-5 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
           Mark as Delivered
         </button>
         <button
           onClick={() => setShowCancelModal(true)}
-          className="w-full bg-red-500 text-white py-3 rounded-lg font-medium"
+          className="w-full bg-red-500 text-white py-3 rounded-lg font-medium flex items-center justify-center"
         >
+          <svg
+            className="w-5 h-5 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
           Cancel Order
         </button>
         <button
           onClick={() => setShowSupportModal(true)}
-          className="w-full border border-gray-300 text-gray-700 py-3 rounded-lg font-medium"
+          className="w-full border border-gray-300 text-gray-700 py-3 rounded-lg font-medium flex items-center justify-center"
         >
+          <svg
+            className="w-5 h-5 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"
+            />
+          </svg>
           Contact Support
         </button>
       </div>
