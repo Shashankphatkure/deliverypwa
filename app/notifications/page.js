@@ -217,6 +217,17 @@ export default function Notifications() {
     if (activeFilter === "all") {
       return getAllNotifications();
     }
+    if (activeFilter === "today") {
+      // Filter notifications that contain "minutes ago", "hours ago" or "just now"
+      return getAllNotifications().filter((notification) => {
+        const timeText = notification.time.toLowerCase();
+        return (
+          timeText.includes("minutes ago") ||
+          timeText.includes("hours ago") ||
+          timeText.includes("just now")
+        );
+      });
+    }
     return notifications[activeFilter] || [];
   };
 
@@ -228,6 +239,7 @@ export default function Notifications() {
       <div className="flex space-x-2 mb-4 overflow-x-auto">
         {[
           { key: "all", label: "All" },
+          { key: "today", label: "Today" },
           { key: "orders", label: "Orders" },
           { key: "earnings", label: "Earnings" },
           { key: "penalties", label: "Penalties" },
