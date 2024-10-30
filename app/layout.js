@@ -2,16 +2,23 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import BottomNavigation from "@/components/BottomNavigation";
 import PWAPrompt from "@/components/PWAPrompt";
+import { Viewport } from "next";
 
 const inter = Inter({ subsets: ["latin"] });
+
+export const viewport = {
+  themeColor: "#000000", // Adjust color as needed
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+  },
+};
 
 export const metadata = {
   title: "Driver App",
   description: "Delivery Driver Application",
   manifest: "/manifest.json",
-  themeColor: "#3b82f6",
-  viewport:
-    "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
