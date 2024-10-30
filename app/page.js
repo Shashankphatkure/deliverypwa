@@ -7,15 +7,44 @@ export default function Home() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingState, setPendingState] = useState(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState("today");
+  const [checklist, setChecklist] = useState({
+    uniform: false,
+    helmet: false,
+    documents: false,
+    vehicle: false,
+    phone: false,
+  });
 
   const handleToggle = (newState) => {
     setPendingState(newState);
+    setChecklist({
+      uniform: false,
+      helmet: false,
+      documents: false,
+      vehicle: false,
+      phone: false,
+    });
     setShowConfirmModal(true);
   };
 
   const confirmToggle = () => {
+    const allChecked = Object.values(checklist).every(
+      (value) => value === true
+    );
+    if (!allChecked) {
+      alert("Please confirm all safety requirements");
+      return;
+    }
+
     setIsDriverModeOn(pendingState);
     setShowConfirmModal(false);
+  };
+
+  const handleChecklistChange = (item) => {
+    setChecklist((prev) => ({
+      ...prev,
+      [item]: !prev[item],
+    }));
   };
 
   const timeframes = [
@@ -170,6 +199,105 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Add this Weather Alert Card after Progress Cards section */}
+      <div className="bg-white rounded-lg shadow mb-6">
+        <div className="p-4 border-b flex justify-between items-center">
+          <h2 className="font-semibold">Weather & Safety</h2>
+          <Link href="/weather" className="text-blue-500 text-sm">
+            View All
+          </Link>
+        </div>
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
+                <svg
+                  className="w-6 h-6 text-yellow-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <div className="flex items-center">
+                  <h3 className="font-medium">Current Weather</h3>
+                  <span className="ml-2 text-sm text-gray-500">Mumbai</span>
+                </div>
+                <p className="text-sm text-gray-600">32°C, Partly Cloudy</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                2 Active Alerts
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {/* Alert 1 */}
+            <div className="flex items-center bg-red-50 p-3 rounded-lg">
+              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                <svg
+                  className="w-4 h-4 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M13 11l-4 4m0 0l-4-4m4 4V3"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-red-800">
+                  Heavy Rain Alert
+                </p>
+                <p className="text-xs text-red-700">
+                  Exercise caution while driving
+                </p>
+              </div>
+            </div>
+
+            {/* Alert 2 */}
+            <div className="flex items-center bg-yellow-50 p-3 rounded-lg">
+              <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
+                <svg
+                  className="w-4 h-4 text-yellow-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-yellow-800">
+                  Road Construction
+                </p>
+                <p className="text-xs text-yellow-700">
+                  Western Express Highway - Expect delays
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Recent Activity */}
       <div className="bg-white rounded-lg shadow">
         <div className="p-4 border-b flex justify-between items-center">
@@ -243,7 +371,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Confirmation Modal */}
+      {/* Modified Confirmation Modal */}
       {showConfirmModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
@@ -252,9 +380,83 @@ export default function Home() {
             </h3>
             <p className="text-gray-600 mb-4">
               {pendingState
-                ? "You will start receiving delivery requests."
-                : "You will stop receiving new delivery requests."}
+                ? "Please confirm the following safety requirements:"
+                : "Please confirm the following before going offline:"}
             </p>
+
+            {/* Checklist Section */}
+            <div className="space-y-3 mb-6">
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={checklist.uniform}
+                  onChange={() => handleChecklistChange("uniform")}
+                  className="form-checkbox h-5 w-5 text-blue-600 rounded"
+                />
+                <span className="text-gray-700">
+                  {pendingState
+                    ? "I am wearing proper uniform"
+                    : "I have completed all pending deliveries"}
+                </span>
+              </label>
+
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={checklist.helmet}
+                  onChange={() => handleChecklistChange("helmet")}
+                  className="form-checkbox h-5 w-5 text-blue-600 rounded"
+                />
+                <span className="text-gray-700">
+                  {pendingState
+                    ? "I am wearing helmet"
+                    : "I have settled all payments"}
+                </span>
+              </label>
+
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={checklist.documents}
+                  onChange={() => handleChecklistChange("documents")}
+                  className="form-checkbox h-5 w-5 text-blue-600 rounded"
+                />
+                <span className="text-gray-700">
+                  {pendingState
+                    ? "I have all required documents"
+                    : "I have reported any incidents/issues"}
+                </span>
+              </label>
+
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={checklist.vehicle}
+                  onChange={() => handleChecklistChange("vehicle")}
+                  className="form-checkbox h-5 w-5 text-blue-600 rounded"
+                />
+                <span className="text-gray-700">
+                  {pendingState
+                    ? "My vehicle is in good condition"
+                    : "I have updated my final location"}
+                </span>
+              </label>
+
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={checklist.phone}
+                  onChange={() => handleChecklistChange("phone")}
+                  className="form-checkbox h-5 w-5 text-blue-600 rounded"
+                />
+                <span className="text-gray-700">
+                  {pendingState
+                    ? "My phone is fully charged"
+                    : "I understand I won't receive new orders"}
+                </span>
+              </label>
+            </div>
+
             <div className="flex space-x-3">
               <button
                 onClick={confirmToggle}
@@ -267,7 +469,16 @@ export default function Home() {
                 Confirm
               </button>
               <button
-                onClick={() => setShowConfirmModal(false)}
+                onClick={() => {
+                  setShowConfirmModal(false);
+                  setChecklist({
+                    uniform: false,
+                    helmet: false,
+                    documents: false,
+                    vehicle: false,
+                    phone: false,
+                  });
+                }}
                 className="flex-1 py-2 bg-gray-100 rounded-lg"
               >
                 Cancel
