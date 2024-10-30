@@ -8,7 +8,6 @@ import {
   BellIcon,
   TruckIcon,
   UserIcon,
-  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 
 export default function BottomNavigation() {
@@ -20,7 +19,6 @@ export default function BottomNavigation() {
     { name: "Earnings", href: "/earnings", icon: WalletIcon },
     { name: "Notifications", href: "/notifications", icon: BellIcon },
     { name: "Profile", href: "/profile", icon: UserIcon },
-    { name: "SOS", href: "/emergency", icon: ExclamationTriangleIcon },
   ];
 
   return (
@@ -33,11 +31,7 @@ export default function BottomNavigation() {
               key={item.name}
               href={item.href}
               className={`flex flex-col items-center p-2 ${
-                item.name === "SOS"
-                  ? "text-red-600"
-                  : isActive
-                  ? "text-blue-600"
-                  : "text-gray-600"
+                isActive ? "text-blue-600" : "text-gray-600"
               }`}
             >
               <item.icon className="w-6 h-6" />
