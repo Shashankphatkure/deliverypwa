@@ -1,9 +1,95 @@
 "use client";
-import { useState } from "react";
+import { useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+const ORDER_STATUSES = [
+  {
+    id: "accepted",
+    label: "Accepted",
+    icon: (
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M5 13l4 4L19 7"
+      />
+    ),
+    color: "text-blue-600",
+    bgColor: "bg-blue-100",
+  },
+  {
+    id: "picked_up",
+    label: "Picked Up",
+    icon: (
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+      />
+    ),
+    color: "text-yellow-600",
+    bgColor: "bg-yellow-100",
+  },
+  {
+    id: "on_way",
+    label: "On The Way",
+    icon: (
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M13 10V3L4 14h7v7l9-11h-7z"
+      />
+    ),
+    color: "text-purple-600",
+    bgColor: "bg-purple-100",
+  },
+  {
+    id: "delivered",
+    label: "Delivered",
+    icon: (
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+      />
+    ),
+    color: "text-green-600",
+    bgColor: "bg-green-100",
+  },
+];
+
+const getStatusStyle = (status) => {
+  const styles = {
+    accepted: {
+      bg: "bg-blue-100",
+      text: "text-blue-800",
+      label: "Accepted",
+    },
+    picked_up: {
+      bg: "bg-yellow-100",
+      text: "text-yellow-800",
+      label: "Picked Up",
+    },
+    on_way: {
+      bg: "bg-purple-100",
+      text: "text-purple-800",
+      label: "On The Way",
+    },
+    delivered: {
+      bg: "bg-green-100",
+      text: "text-green-800",
+      label: "Delivered",
+    },
+  };
+  return styles[status] || styles.accepted;
+};
+
 export default function OrderDetails({ params }) {
+  const { id } = use(params);
   const router = useRouter();
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -12,6 +98,10 @@ export default function OrderDetails({ params }) {
   const [otherMethod, setOtherMethod] = useState("");
   const [cancelReason, setCancelReason] = useState("");
   const [photoProof, setPhotoProof] = useState(null);
+  const [currentStatus, setCurrentStatus] = useState("accepted");
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
 
   const handleDeliverySubmit = () => {
     // Handle delivery completion logic here
@@ -34,6 +124,102 @@ export default function OrderDetails({ params }) {
     setShowSupportModal(false);
   };
 
+  const handleStatusChange = (newStatus) => {
+    setCurrentStatus(newStatus);
+    // Here you would typically make an API call to update the status
+    console.log(`Status updated to: ${newStatus}`);
+  };
+
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    setStartX(e.pageX - e.currentTarget.offsetLeft);
+    setScrollLeft(e.currentTarget.scrollLeft);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = e.pageX - e.currentTarget.offsetLeft;
+    const walk = (x - startX) * 2;
+    e.currentTarget.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const StatusSelector = () => (
+    <div className="bg-white rounded-lg shadow p-4 mb-4">
+      <h2 className="font-semibold mb-4">Order Status</h2>
+      <div
+        className="flex space-x-4 overflow-x-auto pb-2 cursor-grab active:cursor-grabbing"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
+        {ORDER_STATUSES.map((status, index) => {
+          const isActive = currentStatus === status.id;
+          const isPast =
+            ORDER_STATUSES.findIndex((s) => s.id === currentStatus) >
+            ORDER_STATUSES.findIndex((s) => s.id === status.id);
+
+          return (
+            <div
+              key={status.id}
+              className={`flex-shrink-0 relative ${
+                index < ORDER_STATUSES.length - 1
+                  ? 'after:content-[""] after:absolute after:top-1/2 after:right-[-1rem] after:w-4 after:h-0.5 after:bg-gray-200'
+                  : ""
+              }`}
+            >
+              <button
+                onClick={() => handleStatusChange(status.id)}
+                className={`flex flex-col items-center space-y-2 p-3 rounded-lg transition-all ${
+                  isActive
+                    ? status.bgColor
+                    : isPast
+                    ? "bg-gray-100"
+                    : "bg-white"
+                }`}
+              >
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center border-2 ${
+                    isActive
+                      ? `${status.color} border-current`
+                      : isPast
+                      ? "border-gray-400 text-gray-400"
+                      : "border-gray-200 text-gray-400"
+                  }`}
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    {status.icon}
+                  </svg>
+                </div>
+                <span
+                  className={`text-sm font-medium ${
+                    isActive
+                      ? status.color
+                      : isPast
+                      ? "text-gray-600"
+                      : "text-gray-400"
+                  }`}
+                >
+                  {status.label}
+                </span>
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   return (
     <div className="p-4">
       <div className="flex items-center mb-4">
@@ -52,7 +238,7 @@ export default function OrderDetails({ params }) {
             />
           </svg>
         </button>
-        <h1 className="text-2xl font-bold">Order #{params.id}</h1>
+        <h1 className="text-2xl font-bold">Order #{id}</h1>
       </div>
 
       {/* Timer and Status Bar */}
@@ -70,6 +256,8 @@ export default function OrderDetails({ params }) {
         </div>
       </div>
 
+      <StatusSelector />
+
       {/* Order Status */}
       <div className="bg-white rounded-lg shadow p-4 mb-4">
         <div className="flex justify-between items-center mb-4">
@@ -83,7 +271,93 @@ export default function OrderDetails({ params }) {
           </div>
         </div>
         <div className="space-y-2">
-          <div className="flex items-center text-sm">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-medium text-gray-600">Status</span>
+            <span
+              className={`px-3 py-1 rounded-full text-sm font-medium ${
+                getStatusStyle(currentStatus).bg
+              } ${getStatusStyle(currentStatus).text}`}
+            >
+              {getStatusStyle(currentStatus).label}
+            </span>
+          </div>
+
+          <div className="space-y-3 mt-4">
+            {ORDER_STATUSES.map((status, index) => {
+              const isActive = currentStatus === status.id;
+              const isPast =
+                ORDER_STATUSES.findIndex((s) => s.id === currentStatus) >
+                ORDER_STATUSES.findIndex((s) => s.id === status.id);
+
+              return (
+                <div
+                  key={status.id}
+                  className="flex items-center cursor-pointer"
+                  onClick={() => handleStatusChange(status.id)}
+                >
+                  <div
+                    className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                      isActive
+                        ? status.bgColor
+                        : isPast
+                        ? "bg-gray-100"
+                        : "bg-gray-50"
+                    }`}
+                  >
+                    <svg
+                      className={`w-5 h-5 ${
+                        isActive
+                          ? status.color
+                          : isPast
+                          ? "text-gray-500"
+                          : "text-gray-400"
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      {status.icon}
+                    </svg>
+                  </div>
+                  <div className="ml-4 flex-1">
+                    <p
+                      className={`text-sm font-medium ${
+                        isActive
+                          ? status.color
+                          : isPast
+                          ? "text-gray-700"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      {status.label}
+                    </p>
+                    {isActive && (
+                      <p className="text-xs text-gray-500">Current Status</p>
+                    )}
+                  </div>
+                  {isActive && (
+                    <div className={`flex-shrink-0 ${status.color}`}>
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center text-sm mt-4">
             <svg
               className="w-4 h-4 mr-2 text-gray-500"
               fill="none"

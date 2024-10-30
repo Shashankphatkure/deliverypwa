@@ -66,23 +66,27 @@ export default function Earnings() {
       {/* Today's Summary */}
       <div className="bg-white rounded-lg shadow p-4 mb-4">
         <h2 className="text-lg font-semibold mb-3">Earnings Summary</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-gray-600 text-sm">Total Earnings</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-gray-50 p-3 rounded-lg">
+            <p className="text-gray-600 text-sm">Today</p>
+            <p className="text-2xl font-bold">₹2,450.00</p>
+            <p className="text-sm text-gray-500">3 orders</p>
+          </div>
+          <div className="bg-gray-50 p-3 rounded-lg">
+            <p className="text-gray-600 text-sm">This Week</p>
             <p className="text-2xl font-bold">₹8,450.00</p>
+            <p className="text-sm text-gray-500">8 orders</p>
           </div>
-          <div>
-            <p className="text-gray-600 text-sm">Completed Orders</p>
-            <p className="text-2xl font-bold">8</p>
+          <div className="bg-gray-50 p-3 rounded-lg">
+            <p className="text-gray-600 text-sm">This Month</p>
+            <p className="text-2xl font-bold">₹32,150.00</p>
+            <p className="text-sm text-gray-500">35 orders</p>
           </div>
-        </div>
-      </div>
-
-      {/* Weekly Chart */}
-      <div className="bg-white rounded-lg shadow p-4 mb-4">
-        <h2 className="text-lg font-semibold mb-3">Earnings Overview</h2>
-        <div className="h-48 bg-gray-50 rounded flex items-center justify-center">
-          <p className="text-gray-500">Earnings chart coming soon</p>
+          <div className="bg-gray-50 p-3 rounded-lg">
+            <p className="text-gray-600 text-sm">Last Month</p>
+            <p className="text-2xl font-bold">₹28,900.00</p>
+            <p className="text-sm text-gray-500">31 orders</p>
+          </div>
         </div>
       </div>
 
