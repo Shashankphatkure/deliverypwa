@@ -40,29 +40,33 @@ export default function NewPenaltyPage() {
     setSubmitting(true);
 
     try {
-      // Create penalty record
+      // Create penalty record without manager authentication
       const { error: penaltyError } = await supabase.from("penalties").insert([
         {
           driver_id: penalty.driver_id,
           amount: penalty.amount,
           reason: penalty.reason,
           status: "pending",
-          created_by: "current_manager_id", // Replace with actual manager ID
+          // Removing the created_by field since we're not tracking the manager
         },
       ]);
 
       if (penaltyError) throw penaltyError;
 
       // Create notification for driver
-      await supabase.from("notifications").insert([
-        {
-          recipient_type: "driver",
-          recipient_id: penalty.driver_id,
-          title: "New Penalty Added",
-          message: `A penalty of $${penalty.amount} has been added to your account. Reason: ${penalty.reason}`,
-          type: "penalty",
-        },
-      ]);
+      const { error: notificationError } = await supabase
+        .from("notifications")
+        .insert([
+          {
+            recipient_type: "driver",
+            recipient_id: penalty.driver_id,
+            title: "New Penalty Added",
+            message: `A penalty of $${penalty.amount} has been added to your account. Reason: ${penalty.reason}`,
+            type: "penalty",
+          },
+        ]);
+
+      if (notificationError) throw notificationError;
 
       router.push("/dashboard/penalties");
     } catch (error) {

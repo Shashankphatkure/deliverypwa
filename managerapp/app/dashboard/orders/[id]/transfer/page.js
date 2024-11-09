@@ -2,10 +2,11 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
+import { use } from "react";
 
 export default function TransferOrderPage({ params }) {
   const router = useRouter();
-  const { id } = params;
+  const { id } = use(params);
   const supabase = createClientComponentClient();
   const [drivers, setDrivers] = useState([]);
   const [currentDriver, setCurrentDriver] = useState(null);

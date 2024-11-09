@@ -12,10 +12,16 @@ export default function Dashboard() {
       <DashboardStats />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <DashboardCard
-          title="Drivers"
-          link="/dashboard/drivers"
-          description="Manage delivery personnel"
-          icon="🚗"
+          title="Stores"
+          link="/dashboard/stores"
+          description="Manage stores and restaurants"
+          icon="🏪"
+        />
+        <DashboardCard
+          title="Menu Items"
+          link="/dashboard/items"
+          description="Manage food items and pricing"
+          icon="🍽️"
         />
         <DashboardCard
           title="Orders"
@@ -24,16 +30,16 @@ export default function Dashboard() {
           icon="📦"
         />
         <DashboardCard
+          title="Drivers"
+          link="/dashboard/drivers"
+          description="Manage delivery personnel"
+          icon="🚗"
+        />
+        <DashboardCard
           title="Customers"
           link="/dashboard/customers"
           description="Manage customers"
           icon="👥"
-        />
-        <DashboardCard
-          title="Payments"
-          link="/dashboard/payments"
-          description="Process driver payments"
-          icon="💰"
         />
         <DashboardCard
           title="Penalties"
@@ -42,10 +48,10 @@ export default function Dashboard() {
           icon="⚠️"
         />
         <DashboardCard
-          title="Notifications"
-          link="/dashboard/notifications"
-          description="System notifications"
-          icon="🔔"
+          title="Payments"
+          link="/dashboard/payments"
+          description="Process driver payments"
+          icon="💰"
         />
       </div>
     </div>

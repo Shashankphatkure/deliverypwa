@@ -1,16 +1,66 @@
 "use client";
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import Link from "next/link";
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("pending");
+  const [stats, setStats] = useState({
+    pendingOrders: 0,
+    activeDeliveries: 0,
+    completedToday: 0,
+    todayRevenue: 0,
+  });
   const supabase = createClientComponentClient();
 
   useEffect(() => {
     fetchOrders();
+    fetchStats();
   }, [activeTab]);
+
+  async function fetchStats() {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Get pending orders count
+      const { count: pendingCount } = await supabase
+        .from("orders")
+        .select("*", { count: "exact" })
+        .eq("status", "pending");
+
+      // Get active deliveries count (picked_up status)
+      const { count: activeCount } = await supabase
+        .from("orders")
+        .select("*", { count: "exact" })
+        .eq("status", "picked_up");
+
+      // Get today's completed orders and revenue
+      const { data: todayOrders } = await supabase
+        .from("orders")
+        .select("total_amount")
+        .eq("status", "delivered")
+        .gte("created_at", today.toISOString());
+
+      const completedToday = todayOrders?.length || 0;
+      const todayRevenue =
+        todayOrders?.reduce(
+          (sum, order) => sum + (parseFloat(order.total_amount) || 0),
+          0
+        ) || 0;
+
+      setStats({
+        pendingOrders: pendingCount || 0,
+        activeDeliveries: activeCount || 0,
+        completedToday,
+        todayRevenue,
+      });
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+  }
 
   async function fetchOrders() {
     try {
@@ -22,7 +72,8 @@ export default function OrdersPage() {
           users (full_name, phone),
           stores (name),
           delivery_assignments (
-            delivery_personnel (full_name)
+            id,
+            delivery_personnel (id, full_name)
           )
         `
         )
@@ -66,23 +117,23 @@ export default function OrdersPage() {
       <div className="grid grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-4 rounded-lg shadow">
           <h3 className="text-sm font-medium text-gray-500">Pending Orders</h3>
-          <p className="text-2xl font-bold">12</p>
+          <p className="text-2xl font-bold">{stats.pendingOrders}</p>
         </div>
         <div className="bg-white p-4 rounded-lg shadow">
           <h3 className="text-sm font-medium text-gray-500">
             Active Deliveries
           </h3>
-          <p className="text-2xl font-bold">8</p>
+          <p className="text-2xl font-bold">{stats.activeDeliveries}</p>
         </div>
         <div className="bg-white p-4 rounded-lg shadow">
           <h3 className="text-sm font-medium text-gray-500">
             Today's Completed
           </h3>
-          <p className="text-2xl font-bold">45</p>
+          <p className="text-2xl font-bold">{stats.completedToday}</p>
         </div>
         <div className="bg-white p-4 rounded-lg shadow">
           <h3 className="text-sm font-medium text-gray-500">Today's Revenue</h3>
-          <p className="text-2xl font-bold">$1,234</p>
+          <p className="text-2xl font-bold">${stats.todayRevenue.toFixed(2)}</p>
         </div>
       </div>
 
@@ -156,7 +207,7 @@ export default function OrdersPage() {
                   </td>
                   <td className="px-6 py-4">{order.stores?.name}</td>
                   <td className="px-6 py-4">
-                    ${order.total_amount.toFixed(2)}
+                    ${parseFloat(order.total_amount).toFixed(2)}
                   </td>
                   <td className="px-6 py-4">
                     {order.delivery_assignments?.[0]?.delivery_personnel
@@ -173,20 +224,30 @@ export default function OrdersPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="space-x-2">
-                      <a
-                        href={`/dashboard/orders/${order.id}`}
+                      <Link
+                        href={`/dashboard/orders/${order.id}/view`}
                         className="text-blue-600 hover:text-blue-900"
                       >
                         View
-                      </a>
-                      {order.status === "pending" && (
-                        <a
-                          href={`/dashboard/orders/${order.id}/transfer`}
-                          className="text-green-600 hover:text-green-900"
-                        >
-                          Assign
-                        </a>
-                      )}
+                      </Link>
+                      {order.status === "pending" &&
+                        !order.delivery_assignments?.[0] && (
+                          <Link
+                            href={`/dashboard/orders/${order.id}/assign`}
+                            className="text-green-600 hover:text-green-900"
+                          >
+                            Assign
+                          </Link>
+                        )}
+                      {order.status === "pending" &&
+                        order.delivery_assignments?.[0] && (
+                          <Link
+                            href={`/dashboard/orders/${order.id}/transfer`}
+                            className="text-orange-600 hover:text-orange-900"
+                          >
+                            Transfer
+                          </Link>
+                        )}
                     </div>
                   </td>
                 </tr>

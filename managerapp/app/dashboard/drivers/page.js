@@ -15,7 +15,22 @@ export default function DriversPage() {
     try {
       const { data, error } = await supabase
         .from("delivery_personnel")
-        .select("*")
+        .select(
+          `
+          *,
+          delivery_assignments!inner (
+            id,
+            status,
+            orders (
+              id,
+              status,
+              stores (name),
+              delivery_address
+            )
+          )
+        `
+        )
+        .eq("delivery_assignments.status", "assigned")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -50,13 +65,13 @@ export default function DriversPage() {
                   Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Phone
+                  Contact Info
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Current Assignments
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -67,13 +82,13 @@ export default function DriversPage() {
               {drivers.map((driver) => (
                 <tr key={driver.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {driver.full_name}
+                    <div className="font-medium">{driver.full_name}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {driver.email}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {driver.phone}
+                  <td className="px-6 py-4">
+                    <div className="text-sm">
+                      <div>Email: {driver.email}</div>
+                      <div>Phone: {driver.phone}</div>
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
@@ -86,20 +101,79 @@ export default function DriversPage() {
                       {driver.is_active ? "Active" : "Inactive"}
                     </span>
                   </td>
+                  <td className="px-6 py-4">
+                    <div className="space-y-2">
+                      {driver.delivery_assignments?.map((assignment) => (
+                        <div
+                          key={assignment.id}
+                          className="text-sm bg-gray-50 p-2 rounded"
+                        >
+                          <div className="font-medium">
+                            Order #{assignment.orders.id.slice(0, 8)}
+                          </div>
+                          <div className="text-gray-600">
+                            Store: {assignment.orders.stores.name}
+                          </div>
+                          <div className="text-gray-600 truncate max-w-xs">
+                            To: {assignment.orders.delivery_address}
+                          </div>
+                          <span
+                            className={`inline-block mt-1 px-2 py-1 rounded-full text-xs ${getStatusColor(
+                              assignment.orders.status
+                            )}`}
+                          >
+                            {assignment.orders.status}
+                          </span>
+                        </div>
+                      ))}
+                      {(!driver.delivery_assignments ||
+                        driver.delivery_assignments.length === 0) && (
+                        <span className="text-gray-500 text-sm">
+                          No current assignments
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <a
-                      href={`/dashboard/drivers/${driver.id}`}
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      Edit
-                    </a>
+                    <div className="space-y-2">
+                      <a
+                        href={`/dashboard/drivers/${driver.id}`}
+                        className="text-blue-600 hover:text-blue-900 block"
+                      >
+                        Edit
+                      </a>
+                      <a
+                        href={`/dashboard/drivers/${driver.id}/assignments`}
+                        className="text-green-600 hover:text-green-900 block"
+                      >
+                        View All Assignments
+                      </a>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+
+          {drivers.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              No drivers found
+            </div>
+          )}
         </div>
       )}
     </div>
   );
+}
+
+function getStatusColor(status) {
+  const colors = {
+    pending: "bg-yellow-100 text-yellow-800",
+    confirmed: "bg-blue-100 text-blue-800",
+    preparing: "bg-purple-100 text-purple-800",
+    picked_up: "bg-indigo-100 text-indigo-800",
+    delivered: "bg-green-100 text-green-800",
+    cancelled: "bg-red-100 text-red-800",
+  };
+  return colors[status] || "bg-gray-100 text-gray-800";
 }
