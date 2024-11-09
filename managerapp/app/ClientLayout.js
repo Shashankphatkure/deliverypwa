@@ -1,14 +1,11 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { SupabaseProvider, useSupabase } from "./providers/SupabaseProvider";
+import { usePathname } from "next/navigation";
 
-function AppLayout({ children }) {
+export default function ClientLayout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const pathname = usePathname();
-  const { user, signOut } = useSupabase();
-  const router = useRouter();
 
   const menuItems = [
     { path: "/dashboard", label: "Dashboard", icon: "📊" },
@@ -19,15 +16,6 @@ function AppLayout({ children }) {
     { path: "/dashboard/penalties", label: "Penalties", icon: "⚠️" },
     { path: "/dashboard/notifications", label: "Notifications", icon: "🔔" },
   ];
-
-  async function handleSignOut() {
-    await signOut();
-    router.push("/auth/login");
-  }
-
-  if (pathname === "/auth/login") {
-    return children;
-  }
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -79,22 +67,7 @@ function AppLayout({ children }) {
             <div className="flex items-center space-x-4">
               <button className="p-2 hover:bg-gray-100 rounded-full">🔍</button>
               <button className="p-2 hover:bg-gray-100 rounded-full">🔔</button>
-              <div className="relative group">
-                <button className="p-2 hover:bg-gray-100 rounded-full">
-                  👤
-                </button>
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg hidden group-hover:block">
-                  <div className="p-2 border-b">
-                    <p className="text-sm font-medium">{user?.email}</p>
-                  </div>
-                  <button
-                    onClick={handleSignOut}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              </div>
+              <button className="p-2 hover:bg-gray-100 rounded-full">👤</button>
             </div>
           </div>
         </header>
@@ -103,13 +76,5 @@ function AppLayout({ children }) {
         <main className="p-4">{children}</main>
       </div>
     </div>
-  );
-}
-
-export default function ClientLayout({ children }) {
-  return (
-    <SupabaseProvider>
-      <AppLayout>{children}</AppLayout>
-    </SupabaseProvider>
   );
 }
