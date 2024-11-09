@@ -28,6 +28,9 @@ export default function NewPaymentPage() {
     penalty: "",
     paymentstatus: "pending",
   });
+  const [selectedDriverDetails, setSelectedDriverDetails] = useState(null);
+  const [unprocessedOrders, setUnprocessedOrders] = useState([]);
+  const [driverPenalties, setDriverPenalties] = useState([]);
 
   useEffect(() => {
     fetchDrivers();
@@ -37,7 +40,17 @@ export default function NewPaymentPage() {
     try {
       const { data, error } = await supabase
         .from("delivery_personnel")
-        .select("email, full_name, phone")
+        .select(
+          `
+          email, 
+          full_name, 
+          phone,
+          bank_account_no,
+          bank_ifsc_code,
+          vehicle_type,
+          vehicle_number
+        `
+        )
         .eq("is_active", true);
 
       if (error) throw error;
@@ -49,12 +62,93 @@ export default function NewPaymentPage() {
     }
   }
 
+  async function fetchDriverDetails(driverId) {
+    setLoading(true);
+    try {
+      // Fetch driver details
+      const { data: driverData, error: driverError } = await supabase
+        .from("delivery_personnel")
+        .select("*")
+        .eq("email", driverId)
+        .single();
+
+      if (driverError) throw driverError;
+
+      // Fetch unpaid completed orders
+      const { data: ordersData, error: ordersError } = await supabase
+        .from("orders")
+        .select(
+          `
+          id,
+          created_at,
+          start,
+          destination,
+          distance,
+          status,
+          total_amount
+        `
+        )
+        .eq("driveremail", driverId)
+        .eq("status", "completed")
+        .is("payment_processed", null);
+
+      if (ordersError) throw ordersError;
+
+      // Fetch unpaid penalties
+      const { data: penaltiesData, error: penaltiesError } = await supabase
+        .from("penalties")
+        .select("*")
+        .eq("driver_id", driverData.id)
+        .eq("status", "pending");
+
+      if (penaltiesError) throw penaltiesError;
+
+      setSelectedDriverDetails(driverData);
+      setUnprocessedOrders(ordersData || []);
+      setDriverPenalties(penaltiesData || []);
+
+      // Calculate totals
+      const totalDistance = ordersData.reduce(
+        (sum, order) => sum + (parseFloat(order.distance) || 0),
+        0
+      );
+      const totalAmount = ordersData.reduce(
+        (sum, order) => sum + (order.total_amount || 0),
+        0
+      );
+      const totalPenalties = penaltiesData.reduce(
+        (sum, penalty) => sum + (penalty.amount || 0),
+        0
+      );
+
+      setPayment({
+        ...payment,
+        driverid: driverId,
+        totalkm: totalDistance.toFixed(2),
+        totalorders: ordersData.length,
+        finalamount: (totalAmount - totalPenalties).toFixed(2),
+        penalty: totalPenalties,
+      });
+    } catch (error) {
+      console.error("Error fetching driver details:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (payment.driverid) {
+      fetchDriverDetails(payment.driverid);
+    }
+  }, [payment.driverid]);
+
   async function handleSubmit(e) {
     e.preventDefault();
     setProcessing(true);
 
     try {
-      const { error: paymentError } = await supabase
+      // First, create the payment record
+      const { data: paymentData, error: paymentError } = await supabase
         .from("driver_payments")
         .insert([
           {
@@ -63,17 +157,45 @@ export default function NewPaymentPage() {
             totalorders: Number(payment.totalorders),
             advance: Number(payment.advance) || 0,
             penalty: Number(payment.penalty) || 0,
+            processed_orders: unprocessedOrders.map((order) => order.id), // Store processed order IDs
           },
-        ]);
+        ])
+        .select()
+        .single();
 
       if (paymentError) throw paymentError;
 
+      // Update all processed orders
+      const { error: ordersError } = await supabase
+        .from("orders")
+        .update({ payment_processed: new Date().toISOString() })
+        .in(
+          "id",
+          unprocessedOrders.map((order) => order.id)
+        );
+
+      if (ordersError) throw ordersError;
+
+      // Update penalties to processed
+      if (driverPenalties.length > 0) {
+        const { error: penaltiesError } = await supabase
+          .from("penalties")
+          .update({ status: "processed" })
+          .in(
+            "id",
+            driverPenalties.map((penalty) => penalty.id)
+          );
+
+        if (penaltiesError) throw penaltiesError;
+      }
+
+      // Create notification
       await supabase.from("notifications").insert([
         {
           recipient_type: "driver",
-          recipient_id: payment.driverid,
+          recipient_id: selectedDriverDetails.id,
           title: "New Payment Processed",
-          message: `A payment of $${payment.finalamount} has been processed`,
+          message: `A payment of $${payment.finalamount} has been processed for ${unprocessedOrders.length} orders`,
           type: "payment",
         },
       ]);
@@ -87,60 +209,6 @@ export default function NewPaymentPage() {
     }
   }
 
-  const formFields = [
-    {
-      label: "Driver",
-      type: "select",
-      value: payment.driverid,
-      onChange: (value) => setPayment({ ...payment, driverid: value }),
-      icon: UserGroupIcon,
-      options: drivers.map((driver) => ({
-        value: driver.email,
-        label: `${driver.full_name} (${driver.phone})`,
-      })),
-      required: true,
-    },
-    {
-      label: "Final Amount",
-      type: "number",
-      value: payment.finalamount,
-      onChange: (value) => setPayment({ ...payment, finalamount: value }),
-      icon: CalculatorIcon,
-      prefix: "$",
-      required: true,
-    },
-    {
-      label: "Total KM",
-      type: "text",
-      value: payment.totalkm,
-      onChange: (value) => setPayment({ ...payment, totalkm: value }),
-      icon: TruckIcon,
-      required: true,
-    },
-    {
-      label: "Total Orders",
-      type: "number",
-      value: payment.totalorders,
-      onChange: (value) => setPayment({ ...payment, totalorders: value }),
-      icon: DocumentTextIcon,
-      required: true,
-    },
-    {
-      label: "Advance",
-      type: "number",
-      value: payment.advance,
-      onChange: (value) => setPayment({ ...payment, advance: value }),
-      icon: BanknotesIcon,
-    },
-    {
-      label: "Penalty",
-      type: "number",
-      value: payment.penalty,
-      onChange: (value) => setPayment({ ...payment, penalty: value }),
-      icon: XCircleIcon,
-    },
-  ];
-
   return (
     <DashboardLayout
       title="Process New Payment"
@@ -148,103 +216,309 @@ export default function NewPaymentPage() {
       actions={
         <button
           onClick={() => router.push("/dashboard/payments")}
-          className="dashboard-button-secondary flex items-center gap-2"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
         >
           <ArrowLeftIcon className="w-5 h-5" />
           Back to Payments
         </button>
       }
     >
-      <div className="max-w-3xl mx-auto p-8">
+      <div className="max-w-[1600px] mx-auto p-6">
         {loading ? (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[...Array(4)].map((_, i) => (
               <div
                 key={i}
-                className="animate-pulse bg-[#f3f2f1] rounded-lg h-16"
+                className="animate-pulse bg-gray-100 rounded-xl h-32"
               />
             ))}
           </div>
         ) : (
-          <div className="bg-white border border-[#edebe9] rounded-lg shadow-sm p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {formFields.map((field) => (
-                <div key={field.label} className="space-y-2">
-                  <label className="text-sm font-semibold text-[#323130]">
-                    {field.label}
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <field.icon className="h-5 w-5 text-[#605e5c]" />
-                    </div>
-                    {field.type === "select" ? (
-                      <select
-                        value={field.value}
-                        onChange={(e) => field.onChange(e.target.value)}
-                        className="block w-full rounded-md border border-[#8a8886] pl-10 py-2 text-sm focus:border-[#0078d4] focus:ring-[#0078d4]"
-                        required={field.required}
-                      >
-                        <option value="">Select {field.label}</option>
-                        {field.options.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    ) : field.type === "textarea" ? (
-                      <textarea
-                        value={field.value}
-                        onChange={(e) => field.onChange(e.target.value)}
-                        className="block w-full rounded-md border border-[#8a8886] pl-10 py-2 text-sm focus:border-[#0078d4] focus:ring-[#0078d4]"
-                        rows={4}
-                        required={field.required}
-                      />
-                    ) : (
-                      <div className="relative">
-                        {field.prefix && (
-                          <div className="absolute inset-y-0 left-10 flex items-center pointer-events-none">
-                            <span className="text-gray-500">
-                              {field.prefix}
-                            </span>
-                          </div>
-                        )}
-                        <input
-                          type={field.type}
-                          value={field.value}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          className={`block w-full rounded-md border border-[#8a8886] ${
-                            field.prefix ? "pl-14" : "pl-10"
-                          } py-2 text-sm focus:border-[#0078d4] focus:ring-[#0078d4]`}
-                          required={field.required}
-                          step={field.type === "number" ? "0.01" : undefined}
-                          min={field.type === "number" ? "0" : undefined}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-              <div className="pt-6 border-t border-[#edebe9]">
-                <div className="flex justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => router.push("/dashboard/payments")}
-                    className="px-4 py-2 text-sm font-medium text-[#323130] bg-white border border-[#8a8886] rounded-md hover:bg-[#f3f2f1] focus:outline-none focus:ring-2 focus:ring-[#0078d4]"
+          <div className="space-y-6">
+            {/* Top Section - Driver Selection and Summary */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Driver Selection */}
+              <div className="lg:col-span-1">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Select Driver
+                  </h3>
+                  <select
+                    value={payment.driverid}
+                    onChange={(e) =>
+                      setPayment({ ...payment, driverid: e.target.value })
+                    }
+                    className="block w-full rounded-lg border-gray-200 py-3 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    required
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={processing}
-                    className="px-4 py-2 text-sm font-medium text-white bg-[#0078d4] border border-transparent rounded-md hover:bg-[#106ebe] focus:outline-none focus:ring-2 focus:ring-[#0078d4] flex items-center gap-2"
-                  >
-                    <BanknotesIcon className="w-5 h-5" />
-                    {processing ? "Processing..." : "Process Payment"}
-                  </button>
+                    <option value="">Select a driver</option>
+                    {drivers.map((driver) => (
+                      <option key={driver.email} value={driver.email}>
+                        {driver.full_name} ({driver.phone})
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
-            </form>
+
+              {/* Payment Summary */}
+              {selectedDriverDetails && (
+                <div className="lg:col-span-2">
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Payment Summary
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                      <div className="bg-blue-50 rounded-lg p-4">
+                        <p className="text-sm text-blue-600 font-medium">
+                          Total Orders
+                        </p>
+                        <p className="text-2xl font-bold text-blue-700">
+                          {payment.totalorders}
+                        </p>
+                      </div>
+                      <div className="bg-green-50 rounded-lg p-4">
+                        <p className="text-sm text-green-600 font-medium">
+                          Total Distance
+                        </p>
+                        <p className="text-2xl font-bold text-green-700">
+                          {payment.totalkm} km
+                        </p>
+                      </div>
+                      <div className="bg-red-50 rounded-lg p-4">
+                        <p className="text-sm text-red-600 font-medium">
+                          Penalties
+                        </p>
+                        <p className="text-2xl font-bold text-red-700">
+                          ${payment.penalty}
+                        </p>
+                      </div>
+                      <div className="bg-purple-50 rounded-lg p-4">
+                        <p className="text-sm text-purple-600 font-medium">
+                          Final Amount
+                        </p>
+                        <p className="text-2xl font-bold text-purple-700">
+                          ${payment.finalamount}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {selectedDriverDetails && (
+              <>
+                {/* Middle Section - Driver Details */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Driver Information
+                      </h3>
+                      <span className="px-3 py-1 text-sm font-medium text-green-700 bg-green-100 rounded-full">
+                        Active Driver
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">
+                            Full Name
+                          </p>
+                          <p className="text-base font-semibold text-gray-900">
+                            {selectedDriverDetails.full_name}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">Phone</p>
+                          <p className="text-base font-semibold text-gray-900">
+                            {selectedDriverDetails.phone}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">
+                            Bank Account
+                          </p>
+                          <p className="text-base font-semibold text-gray-900">
+                            {selectedDriverDetails.bank_account_no}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">
+                            IFSC Code
+                          </p>
+                          <p className="text-base font-semibold text-gray-900">
+                            {selectedDriverDetails.bank_ifsc_code}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">
+                            Vehicle Details
+                          </p>
+                          <p className="text-base font-semibold text-gray-900">
+                            {selectedDriverDetails.vehicle_type} -{" "}
+                            {selectedDriverDetails.vehicle_number}
+                          </p>
+                        </div>
+                        <div>
+                          <label className="text-sm text-gray-500 mb-1 block">
+                            Advance Payment
+                          </label>
+                          <input
+                            type="number"
+                            value={payment.advance}
+                            onChange={(e) =>
+                              setPayment({
+                                ...payment,
+                                advance: e.target.value,
+                              })
+                            }
+                            className="block w-full rounded-lg border-gray-200 py-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Enter advance amount"
+                            min="0"
+                            step="0.01"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Section - Orders and Penalties */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Orders Table */}
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          Unprocessed Orders
+                        </h3>
+                        <span className="px-3 py-1 text-sm font-medium text-blue-700 bg-blue-100 rounded-full">
+                          {unprocessedOrders.length} Orders
+                        </span>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead>
+                            <tr className="bg-gray-50">
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Order ID
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Date
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Distance
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Amount
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200">
+                            {unprocessedOrders.map((order) => (
+                              <tr
+                                key={order.id}
+                                className="hover:bg-gray-50 transition-colors"
+                              >
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                  #{order.id}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                  {new Date(
+                                    order.created_at
+                                  ).toLocaleDateString()}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                  {order.distance} km
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                  ${order.total_amount}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Penalties Table */}
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          Pending Penalties
+                        </h3>
+                        <span className="px-3 py-1 text-sm font-medium text-red-700 bg-red-100 rounded-full">
+                          {driverPenalties.length} Penalties
+                        </span>
+                      </div>
+                      <div className="overflow-x-auto">
+                        {driverPenalties.length > 0 ? (
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead>
+                              <tr className="bg-gray-50">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Date
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Reason
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Amount
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                              {driverPenalties.map((penalty) => (
+                                <tr
+                                  key={penalty.id}
+                                  className="hover:bg-gray-50 transition-colors"
+                                >
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {new Date(
+                                      penalty.created_at
+                                    ).toLocaleDateString()}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {penalty.reason}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
+                                    -${penalty.amount}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        ) : (
+                          <p className="text-center text-gray-500 py-4">
+                            No pending penalties
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Process Payment Button */}
+                <div className="flex justify-end mt-6">
+                  <button
+                    onClick={handleSubmit}
+                    disabled={processing}
+                    className="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-blue-600 border border-transparent rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <BanknotesIcon className="w-5 h-5 mr-2" />
+                    {processing ? "Processing Payment..." : "Process Payment"}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

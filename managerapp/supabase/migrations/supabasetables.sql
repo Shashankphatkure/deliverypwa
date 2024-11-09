@@ -75,6 +75,7 @@ create table driver_payments (
     advance bigint null,
     penalty bigint null,
     driverid text null,
+    processed_orders jsonb,
     constraint driverpayment_pkey primary key (id),
     constraint public_driverpayment_driverid_fkey foreign key (driverid) references delivery_personnel (email)
 );
@@ -203,6 +204,7 @@ CREATE TABLE orders (
     payment_status text CHECK (payment_status in ('pending', 'completed', 'failed')) DEFAULT 'pending',
     payment_method text,
     delivery_notes text,
+    payment_processed timestamp with time zone,
     CONSTRAINT orders_pkey PRIMARY KEY (id),
     CONSTRAINT orders_customerid_fkey FOREIGN KEY (customerid) REFERENCES users(id),
     CONSTRAINT orders_driverid_fkey FOREIGN KEY (driverid) REFERENCES delivery_personnel(id)
