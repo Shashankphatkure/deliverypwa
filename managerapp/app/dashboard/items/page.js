@@ -2,16 +2,12 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import DashboardLayout from "../components/DashboardLayout";
 import {
   ShoppingBagIcon,
   BuildingStorefrontIcon,
-  TagIcon,
-  CurrencyDollarIcon,
-  PlusIcon,
   MagnifyingGlassIcon,
-  FunnelIcon,
+  PlusIcon,
 } from "@heroicons/react/24/outline";
 
 export default function MenuItemsPage() {
@@ -96,20 +92,13 @@ export default function MenuItemsPage() {
         </Link>
       }
     >
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="p-6"
-      >
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6 bg-white rounded-xl shadow-md p-4"
-        >
+      <div className="p-6">
+        {/* Filters */}
+        <div className="mb-6 bg-white rounded-xl shadow-md p-4">
           <div className="flex flex-col md:flex-row gap-4 items-center">
             <div className="relative flex-1">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                <MagnifyingGlassIcon className="h-5 w-5 text-[#605e5c]" />
               </div>
               <input
                 type="text"
@@ -119,7 +108,7 @@ export default function MenuItemsPage() {
             </div>
             <div className="relative w-full md:w-64">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <BuildingStorefrontIcon className="h-5 w-5 text-gray-400" />
+                <BuildingStorefrontIcon className="h-5 w-5 text-[#605e5c]" />
               </div>
               <select
                 value={selectedStore}
@@ -135,23 +124,20 @@ export default function MenuItemsPage() {
               </select>
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        {loading ? (
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div
-                key={i}
-                className="animate-pulse bg-white/50 rounded-xl h-24 backdrop-blur-lg"
-              />
-            ))}
-          </div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="bg-white rounded-xl shadow-md overflow-hidden"
-          >
+        {/* Items Table */}
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          {loading ? (
+            <div className="space-y-4 p-4">
+              {[...Array(5)].map((_, i) => (
+                <div
+                  key={i}
+                  className="animate-pulse bg-[#f3f2f1] rounded h-16"
+                />
+              ))}
+            </div>
+          ) : (
             <table className="min-w-full">
               <thead className="bg-gray-50">
                 <tr>
@@ -247,15 +233,18 @@ export default function MenuItemsPage() {
                 ))}
               </tbody>
             </table>
+          )}
 
-            {items.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
+          {items.length === 0 && !loading && (
+            <div className="text-center py-12">
+              <ShoppingBagIcon className="mx-auto h-12 w-12 text-[#605e5c]" />
+              <h3 className="mt-2 text-sm font-medium text-[#323130]">
                 No menu items found
-              </div>
-            )}
-          </motion.div>
-        )}
-      </motion.div>
+              </h3>
+            </div>
+          )}
+        </div>
+      </div>
     </DashboardLayout>
   );
 }

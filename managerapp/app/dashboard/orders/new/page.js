@@ -2,12 +2,11 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import DashboardLayout from "../../components/DashboardLayout";
 import {
+  ShoppingBagIcon,
   UserGroupIcon,
   BuildingStorefrontIcon,
-  ShoppingBagIcon,
   MapPinIcon,
   DocumentTextIcon,
   ArrowLeftIcon,
@@ -245,29 +244,20 @@ export default function NewOrderPage() {
         </button>
       }
     >
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-3xl mx-auto p-6"
-      >
+      <div className="max-w-3xl mx-auto p-6">
         {loading ? (
           <div className="space-y-4">
             {[...Array(4)].map((_, i) => (
               <div
                 key={i}
-                className="animate-pulse bg-white/50 rounded-xl h-16 backdrop-blur-lg"
+                className="animate-pulse bg-[#f3f2f1] rounded h-16"
               />
             ))}
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
             {formFields.map((field) => (
-              <motion.div
-                key={field.label}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="dashboard-card"
-              >
+              <div className="dashboard-card">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {field.label}
                 </label>
@@ -299,15 +289,11 @@ export default function NewOrderPage() {
                     />
                   )}
                 </div>
-              </motion.div>
+              </div>
             ))}
 
             {order.store_id && (
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="dashboard-card"
-              >
+              <div className="dashboard-card">
                 <div className="flex justify-between items-center mb-4">
                   <label className="block text-sm font-medium text-gray-700">
                     Order Items
@@ -376,14 +362,10 @@ export default function NewOrderPage() {
                     </div>
                   ))}
                 </div>
-              </motion.div>
+              </div>
             )}
 
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="dashboard-card"
-            >
+            <div className="dashboard-card">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium text-gray-700">
                   Total Amount
@@ -393,14 +375,9 @@ export default function NewOrderPage() {
                   {order.total_amount.toFixed(2)}
                 </div>
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="flex justify-end space-x-4"
-            >
+            <div className="flex justify-end space-x-4">
               <button
                 type="submit"
                 disabled={submitting}
@@ -409,10 +386,10 @@ export default function NewOrderPage() {
                 <ShoppingBagIcon className="w-5 h-5" />
                 {submitting ? "Creating..." : "Create Order"}
               </button>
-            </motion.div>
+            </div>
           </form>
         )}
-      </motion.div>
+      </div>
     </DashboardLayout>
   );
 }

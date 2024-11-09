@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { use } from "react";
 import DashboardLayout from "../../../components/DashboardLayout";
 import {
@@ -11,7 +10,6 @@ import {
   BuildingStorefrontIcon,
   TruckIcon,
   ClockIcon,
-  CurrencyDollarIcon,
   DocumentTextIcon,
   MapPinIcon,
   PhoneIcon,
@@ -267,30 +265,19 @@ export default function ViewOrderPage({ params }) {
       <div className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {orderSections.map((section, index) => (
-            <motion.div
-              key={section.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="dashboard-card"
-            >
+            <div key={section.title} className="dashboard-card">
               <div className="flex items-center gap-2 mb-4">
-                <section.icon className="w-6 h-6 text-gray-400" />
+                <section.icon className="w-6 h-6 text-[#605e5c]" />
                 <h2 className="text-lg font-semibold">{section.title}</h2>
               </div>
               {section.content}
-            </motion.div>
+            </div>
           ))}
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="dashboard-card"
-        >
+        <div className="dashboard-card">
           <div className="flex items-center gap-2 mb-4">
-            <DocumentTextIcon className="w-6 h-6 text-gray-400" />
+            <DocumentTextIcon className="w-6 h-6 text-[#605e5c]" />
             <h2 className="text-lg font-semibold">Order Items</h2>
           </div>
           <table className="min-w-full">
@@ -321,7 +308,7 @@ export default function ViewOrderPage({ params }) {
               </tr>
             </tbody>
           </table>
-        </motion.div>
+        </div>
       </div>
     </DashboardLayout>
   );

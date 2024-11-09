@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { motion } from "framer-motion";
+import Link from "next/link";
 import DashboardLayout from "../components/DashboardLayout";
 import {
   UserGroupIcon,
@@ -53,33 +53,26 @@ export default function DriversPage() {
     <DashboardLayout
       title="Delivery Drivers"
       actions={
-        <a
+        <Link
           href="/dashboard/drivers/new"
           className="dashboard-button-primary flex items-center gap-2"
         >
           <PlusIcon className="w-5 h-5" />
           Add New Driver
-        </a>
+        </Link>
       }
     >
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="p-6"
-      >
+      <div className="p-6">
         {loading ? (
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                className="animate-pulse bg-white/50 rounded-xl h-24 backdrop-blur-lg"
-              />
+              <div key={i} className="animate-pulse bg-white rounded-xl h-24" />
             ))}
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow-lg overflow-hidden">
             <table className="min-w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-[#f3f2f1]">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Name
@@ -98,7 +91,7 @@ export default function DriversPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-[#edebe9]">
                 {drivers.map((driver) => (
                   <tr key={driver.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -156,18 +149,18 @@ export default function DriversPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="space-y-2">
-                        <a
+                        <Link
                           href={`/dashboard/drivers/${driver.id}`}
                           className="text-blue-600 hover:text-blue-900 block"
                         >
                           Edit
-                        </a>
-                        <a
+                        </Link>
+                        <Link
                           href={`/dashboard/drivers/${driver.id}/assignments`}
                           className="text-green-600 hover:text-green-900 block"
                         >
                           View All Assignments
-                        </a>
+                        </Link>
                       </div>
                     </td>
                   </tr>
@@ -176,13 +169,13 @@ export default function DriversPage() {
             </table>
 
             {drivers.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-[#605e5c]">
                 No drivers found
               </div>
             )}
           </div>
         )}
-      </motion.div>
+      </div>
     </DashboardLayout>
   );
 }

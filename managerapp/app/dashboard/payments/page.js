@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { motion } from "framer-motion";
 import Link from "next/link";
 import DashboardLayout from "../components/DashboardLayout";
 import {
@@ -10,8 +9,6 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   UserGroupIcon,
-  FunnelIcon,
-  ArrowsUpDownIcon,
   PlusIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
@@ -88,22 +85,12 @@ export default function PaymentsPage() {
     >
       <div className="p-6">
         {/* Stats Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
-        >
-          {paymentStats.map((stat, index) => (
-            <motion.div
-              key={stat.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="dashboard-card"
-            >
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          {paymentStats.map((stat) => (
+            <div key={stat.title} className="dashboard-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-500">
+                  <p className="text-sm font-medium text-[#605e5c]">
                     {stat.title}
                   </p>
                   <p className="text-2xl font-bold mt-2">{stat.value}</p>
@@ -112,9 +99,9 @@ export default function PaymentsPage() {
                   <stat.icon className={`w-6 h-6 text-${stat.color}-600`} />
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
 
         {/* Filters */}
         <div className="flex gap-4 mb-6">
@@ -141,12 +128,7 @@ export default function PaymentsPage() {
         </div>
 
         {/* Payments Table */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white rounded-xl shadow-lg overflow-hidden"
-        >
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           {loading ? (
             <div className="p-4 space-y-4">
               {[...Array(5)].map((_, i) => (
@@ -253,7 +235,7 @@ export default function PaymentsPage() {
               </p>
             </div>
           )}
-        </motion.div>
+        </div>
       </div>
     </DashboardLayout>
   );

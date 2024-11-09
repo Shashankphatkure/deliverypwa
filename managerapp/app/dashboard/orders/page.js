@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import DashboardLayout from "../components/DashboardLayout";
 import {
   ClockIcon,
@@ -147,41 +146,28 @@ export default function OrdersPage() {
     >
       <div className="p-6">
         {/* Stats Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
-        >
-          {statsCards.map((card, index) => (
-            <motion.div
-              key={card.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="dashboard-card"
-            >
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          {statsCards.map((card) => (
+            <div key={card.title} className="dashboard-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-500">
+                  <p className="text-sm font-medium text-[#605e5c]">
                     {card.title}
                   </p>
-                  <p className="text-2xl font-bold mt-2">{card.value}</p>
+                  <p className="text-2xl font-bold mt-2 text-[#323130]">
+                    {card.value}
+                  </p>
                 </div>
-                <div
-                  className={`p-3 rounded-lg bg-${card.color}-50 group-hover:bg-${card.color}-100`}
-                >
-                  <card.icon
-                    className={`w-6 h-6 text-${card.color}-600`}
-                    aria-hidden="true"
-                  />
+                <div className={`p-3 rounded-lg bg-${card.color}-50`}>
+                  <card.icon className={`w-6 h-6 text-${card.color}-600`} />
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
 
         {/* Status Tabs */}
-        <div className="flex mb-6 bg-gray-100/50 rounded-lg p-1 backdrop-blur-sm">
+        <div className="flex mb-6 bg-[#f3f2f1] rounded-lg p-1">
           {[
             "pending",
             "confirmed",
@@ -195,8 +181,8 @@ export default function OrdersPage() {
               onClick={() => setActiveTab(status)}
               className={`flex-1 py-2 px-4 rounded-lg capitalize transition-all duration-200 ${
                 activeTab === status
-                  ? "bg-white shadow-md font-medium text-gray-800"
-                  : "text-gray-600 hover:bg-white/50"
+                  ? "bg-white shadow-md font-medium text-[#323130]"
+                  : "text-[#605e5c] hover:bg-white/50"
               }`}
             >
               {status}
@@ -205,108 +191,117 @@ export default function OrdersPage() {
         </div>
 
         {/* Orders Table */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white/80 rounded-xl backdrop-blur-lg shadow-lg overflow-hidden"
-        >
-          <table className="dashboard-table">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Order ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Customer
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Store
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Amount
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Driver
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {orders.map((order) => (
-                <tr key={order.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    #{order.id.slice(0, 8)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="font-medium">{order.users?.full_name}</p>
-                      <p className="text-sm text-gray-500">
-                        {order.users?.phone}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">{order.stores?.name}</td>
-                  <td className="px-6 py-4">
-                    ${parseFloat(order.total_amount).toFixed(2)}
-                  </td>
-                  <td className="px-6 py-4">
-                    {order.delivery_assignments?.[0]?.delivery_personnel
-                      ?.full_name || "Unassigned"}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${getStatusColor(
-                        order.status
-                      )}`}
-                    >
-                      {order.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="space-x-2">
-                      <Link
-                        href={`/dashboard/orders/${order.id}/view`}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        View
-                      </Link>
-                      {order.status === "pending" &&
-                        !order.delivery_assignments?.[0] && (
-                          <Link
-                            href={`/dashboard/orders/${order.id}/assign`}
-                            className="text-green-600 hover:text-green-900"
-                          >
-                            Assign
-                          </Link>
-                        )}
-                      {order.status === "pending" &&
-                        order.delivery_assignments?.[0] && (
-                          <Link
-                            href={`/dashboard/orders/${order.id}/transfer`}
-                            className="text-orange-600 hover:text-orange-900"
-                          >
-                            Transfer
-                          </Link>
-                        )}
-                    </div>
-                  </td>
-                </tr>
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          {loading ? (
+            <div className="p-4 space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div
+                  key={i}
+                  className="animate-pulse h-16 bg-[#f3f2f1] rounded"
+                />
               ))}
-            </tbody>
-          </table>
+            </div>
+          ) : (
+            <table className="min-w-full divide-y divide-[#edebe9]">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Order ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Customer
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Store
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Amount
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Driver
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {orders.map((order) => (
+                  <tr key={order.id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      #{order.id.slice(0, 8)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div>
+                        <p className="font-medium">{order.users?.full_name}</p>
+                        <p className="text-sm text-gray-500">
+                          {order.users?.phone}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">{order.stores?.name}</td>
+                    <td className="px-6 py-4">
+                      ${parseFloat(order.total_amount).toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4">
+                      {order.delivery_assignments?.[0]?.delivery_personnel
+                        ?.full_name || "Unassigned"}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${getStatusColor(
+                          order.status
+                        )}`}
+                      >
+                        {order.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="space-x-2">
+                        <Link
+                          href={`/dashboard/orders/${order.id}/view`}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          View
+                        </Link>
+                        {order.status === "pending" &&
+                          !order.delivery_assignments?.[0] && (
+                            <Link
+                              href={`/dashboard/orders/${order.id}/assign`}
+                              className="text-green-600 hover:text-green-900"
+                            >
+                              Assign
+                            </Link>
+                          )}
+                        {order.status === "pending" &&
+                          order.delivery_assignments?.[0] && (
+                            <Link
+                              href={`/dashboard/orders/${order.id}/transfer`}
+                              className="text-orange-600 hover:text-orange-900"
+                            >
+                              Transfer
+                            </Link>
+                          )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
 
-          {orders.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              No {activeTab} orders found
+          {orders.length === 0 && !loading && (
+            <div className="text-center py-12">
+              <ClockIcon className="mx-auto h-12 w-12 text-[#605e5c]" />
+              <h3 className="mt-2 text-sm font-medium text-[#323130]">
+                No {activeTab} orders found
+              </h3>
             </div>
           )}
-        </motion.div>
+        </div>
       </div>
     </DashboardLayout>
   );

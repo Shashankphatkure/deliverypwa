@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import { use } from "react";
 import DashboardLayout from "../../../components/DashboardLayout";
 import {
@@ -120,11 +119,7 @@ export default function AssignOrderPage({ params }) {
         <div className="max-w-3xl mx-auto">
           {/* Order Details Card */}
           {orderDetails && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="dashboard-card mb-6"
-            >
+            <div className="dashboard-card mb-6">
               <div className="flex items-center gap-2 mb-4">
                 <TruckIcon className="w-6 h-6 text-gray-400" />
                 <h2 className="text-lg font-semibold">Order Details</h2>
@@ -155,25 +150,20 @@ export default function AssignOrderPage({ params }) {
                   </p>
                 </div>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* Driver Selection Form */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="dashboard-card"
-          >
+          <div className="dashboard-card">
             <div className="flex items-center gap-2 mb-6">
-              <UserGroupIcon className="w-6 h-6 text-gray-400" />
+              <UserGroupIcon className="w-6 h-6 text-[#605e5c]" />
               <h2 className="text-lg font-semibold">Select Driver</h2>
             </div>
 
             {loading ? (
               <div className="animate-pulse space-y-4">
-                <div className="h-10 bg-gray-200 rounded"></div>
-                <div className="h-10 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-10 bg-[#f3f2f1] rounded"></div>
+                <div className="h-10 bg-[#f3f2f1] rounded w-1/2"></div>
               </div>
             ) : (
               <form onSubmit={handleAssign} className="space-y-6">
@@ -208,7 +198,7 @@ export default function AssignOrderPage({ params }) {
                 </div>
               </form>
             )}
-          </motion.div>
+          </div>
         </div>
       </div>
     </DashboardLayout>

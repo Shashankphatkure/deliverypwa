@@ -1,5 +1,4 @@
 "use client";
-import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import {
   HomeIcon,
@@ -14,21 +13,6 @@ import {
 const DashboardStats = dynamic(() => import("./components/DashboardStats"), {
   ssr: false,
 });
-
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 },
-};
 
 export default function Dashboard() {
   const dashboardCards = [
@@ -77,62 +61,52 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="p-6 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <h1 className="text-3xl font-bold mb-8 text-gray-800">
-          Dashboard Overview
-        </h1>
-      </motion.div>
+    <div className="p-8 min-h-screen bg-[#faf9f8]">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-4xl font-light mb-2 text-[#323130]">
+            Dashboard Overview
+          </h1>
+          <p className="text-[#605e5c]">Welcome to your management dashboard</p>
+        </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="mb-8"
-      >
-        <DashboardStats />
-      </motion.div>
+        <div className="mb-12">
+          <DashboardStats />
+        </div>
 
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-      >
-        {dashboardCards.map((card, index) => (
-          <motion.div key={card.title} variants={item}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {dashboardCards.map((card) => (
             <DashboardCard
+              key={card.title}
               title={card.title}
               link={card.link}
               description={card.description}
               Icon={card.icon}
             />
-          </motion.div>
-        ))}
-      </motion.div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
 function DashboardCard({ title, link, description, Icon }) {
   return (
-    <motion.a
+    <a
       href={link}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      className="block p-6 rounded-xl backdrop-blur-lg bg-white/80 border border-gray-200/50 shadow-lg hover:shadow-xl transition-all duration-300 group"
+      className="block p-6 rounded-lg bg-white border border-[#edebe9] hover:border-[#0078d4] shadow-sm hover:shadow-md transition-all duration-200 group"
     >
-      <div className="flex items-center mb-3">
-        <div className="p-2 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition-colors">
-          <Icon className="w-6 h-6 text-blue-600" />
+      <div className="flex items-center mb-4">
+        <div className="p-2 rounded-md bg-[#f3f2f1] group-hover:bg-[#deecf9] transition-colors">
+          <Icon className="w-6 h-6 text-[#0078d4]" />
         </div>
-        <h2 className="text-xl font-semibold ml-3 text-gray-800">{title}</h2>
+        <h2 className="text-xl font-semibold ml-3 text-[#323130] group-hover:text-[#0078d4] transition-colors">
+          {title}
+        </h2>
       </div>
-      <p className="text-gray-600">{description}</p>
-    </motion.a>
+      <p className="text-[#605e5c] group-hover:text-[#323130] transition-colors">
+        {description}
+      </p>
+    </a>
   );
 }

@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import DashboardLayout from "../../components/DashboardLayout";
 import {
   ExclamationTriangleIcon,
@@ -128,38 +127,26 @@ export default function NewPenaltyPage() {
         </button>
       }
     >
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-2xl mx-auto p-6"
-      >
+      <div className="max-w-2xl mx-auto p-6">
         {loading ? (
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className="animate-pulse bg-white/50 rounded-xl h-16 backdrop-blur-lg"
+                className="animate-pulse bg-[#f3f2f1] rounded h-16"
               />
             ))}
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
             {formFields.map((field) => (
-              <motion.div
-                key={field.label}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="dashboard-card"
-              >
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div key={field.label} className="dashboard-card">
+                <label className="block text-sm font-medium text-[#323130] mb-2">
                   {field.label}
                 </label>
                 <div className="relative rounded-md shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <field.icon
-                      className="h-5 w-5 text-gray-400"
-                      aria-hidden="true"
-                    />
+                    <field.icon className="h-5 w-5 text-[#605e5c]" />
                   </div>
                   {field.type === "select" ? (
                     <select
@@ -202,15 +189,10 @@ export default function NewPenaltyPage() {
                     </div>
                   )}
                 </div>
-              </motion.div>
+              </div>
             ))}
 
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="flex justify-end space-x-4"
-            >
+            <div className="flex justify-end">
               <button
                 type="submit"
                 disabled={submitting}
@@ -219,10 +201,10 @@ export default function NewPenaltyPage() {
                 <ExclamationTriangleIcon className="w-5 h-5" />
                 {submitting ? "Adding..." : "Add Penalty"}
               </button>
-            </motion.div>
+            </div>
           </form>
         )}
-      </motion.div>
+      </div>
     </DashboardLayout>
   );
 }

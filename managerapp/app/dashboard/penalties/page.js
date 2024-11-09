@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import DashboardLayout from "../components/DashboardLayout";
 import {
   ExclamationTriangleIcon,
@@ -69,19 +68,6 @@ export default function PenaltiesPage() {
     }
   }
 
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 },
-    },
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 },
-  };
-
   return (
     <DashboardLayout
       title="Penalties"
@@ -97,23 +83,19 @@ export default function PenaltiesPage() {
     >
       <div className="p-6">
         {/* Stats Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
-        >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="dashboard-card">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">
+                <p className="text-sm font-medium text-[#605e5c]">
                   TOTAL PENALTIES
                 </p>
                 <p className="text-2xl font-bold mt-2">
                   {stats.totalPenalties}
                 </p>
               </div>
-              <div className="p-3 rounded-lg bg-blue-50">
-                <ExclamationTriangleIcon className="w-6 h-6 text-blue-600" />
+              <div className="p-3 rounded-lg bg-[#f3f2f1]">
+                <ExclamationTriangleIcon className="w-6 h-6 text-[#0078d4]" />
               </div>
             </div>
           </div>
@@ -147,28 +129,19 @@ export default function PenaltiesPage() {
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Penalties List */}
-        <motion.div
-          variants={container}
-          initial="hidden"
-          animate="show"
-          className="space-y-4"
-        >
+        <div className="space-y-4">
           {loading
             ? [...Array(3)].map((_, i) => (
                 <div
                   key={i}
-                  className="animate-pulse bg-white/50 rounded-xl h-24 backdrop-blur-lg"
+                  className="animate-pulse bg-white rounded-xl h-24"
                 />
               ))
             : penalties.map((penalty) => (
-                <motion.div
-                  key={penalty.id}
-                  variants={item}
-                  className="dashboard-card group hover:shadow-lg transition-all duration-300"
-                >
+                <div key={penalty.id} className="dashboard-card">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
@@ -203,21 +176,21 @@ export default function PenaltiesPage() {
                       )}
                     </div>
                   </div>
-                </motion.div>
+                </div>
               ))}
 
           {penalties.length === 0 && !loading && (
             <div className="text-center py-12">
-              <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">
+              <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-[#605e5c]" />
+              <h3 className="mt-2 text-sm font-medium text-[#323130]">
                 No penalties
               </h3>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-[#605e5c]">
                 Get started by creating a new penalty.
               </p>
             </div>
           )}
-        </motion.div>
+        </div>
       </div>
     </DashboardLayout>
   );

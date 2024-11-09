@@ -1,5 +1,4 @@
 "use client";
-import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import {
@@ -94,10 +93,7 @@ export default function DashboardStats() {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[...Array(6)].map((_, i) => (
-          <div
-            key={i}
-            className="animate-pulse bg-white/50 rounded-xl h-32 backdrop-blur-lg"
-          />
+          <div key={i} className="animate-pulse bg-white rounded-xl h-32" />
         ))}
       </div>
     );
@@ -143,37 +139,22 @@ export default function DashboardStats() {
   ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="grid grid-cols-1 md:grid-cols-3 gap-6"
-    >
-      {statCards.map((card, index) => (
-        <motion.div
-          key={card.title}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.1 }}
-          className="dashboard-card group hover:shadow-xl transition-all duration-300"
-        >
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {statCards.map((card) => (
+        <div key={card.title} className="dashboard-card group">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">{card.title}</p>
-              <p className="text-3xl font-bold mt-2 text-gray-800">
+              <p className="text-sm font-medium text-[#605e5c]">{card.title}</p>
+              <p className="text-2xl font-bold mt-2 text-[#323130]">
                 {card.value}
               </p>
             </div>
-            <div
-              className={`p-3 rounded-lg bg-${card.color}-50 group-hover:bg-${card.color}-100 transition-colors`}
-            >
-              <card.icon
-                className={`w-6 h-6 text-${card.color}-600`}
-                aria-hidden="true"
-              />
+            <div className={`p-3 rounded-lg bg-${card.color}-50`}>
+              <card.icon className={`w-6 h-6 text-${card.color}-600`} />
             </div>
           </div>
-        </motion.div>
+        </div>
       ))}
-    </motion.div>
+    </div>
   );
 }

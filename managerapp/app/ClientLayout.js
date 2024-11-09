@@ -2,7 +2,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
 import {
   ChartBarIcon,
   TruckIcon,
@@ -40,24 +39,13 @@ export default function ClientLayout({ children }) {
     },
   ];
 
-  const sidebarVariants = {
-    open: { width: "280px", transition: { duration: 0.3 } },
-    closed: { width: "80px", transition: { duration: 0.3 } },
-  };
-
-  const textVariants = {
-    open: { opacity: 1, x: 0, display: "block" },
-    closed: { opacity: 0, x: -10, display: "none" },
-  };
-
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <motion.div
-        initial="open"
-        animate={isSidebarOpen ? "open" : "closed"}
-        variants={sidebarVariants}
-        className="bg-white border-r border-gray-200 relative"
+      <div
+        className={`bg-white border-r border-gray-200 relative transition-all duration-300 ${
+          isSidebarOpen ? "w-[280px]" : "w-[80px]"
+        }`}
       >
         <div className="p-6">
           <nav className="space-y-1">
@@ -65,9 +53,8 @@ export default function ClientLayout({ children }) {
               const isActive = pathname === item.path;
               return (
                 <Link key={item.path} href={item.path}>
-                  <motion.div
-                    whileHover={{ x: 6 }}
-                    className={`flex items-center px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 ${
+                  <div
+                    className={`flex items-center px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 hover:translate-x-1 ${
                       isActive
                         ? "bg-blue-50 text-blue-600"
                         : "text-gray-600 hover:bg-gray-50 hover:text-blue-600"
@@ -78,24 +65,19 @@ export default function ClientLayout({ children }) {
                         isActive ? "text-blue-600" : "text-gray-500"
                       }`}
                     />
-                    <motion.span
-                      variants={textVariants}
-                      className={`ml-3 font-medium ${
-                        isActive ? "text-blue-600" : "text-gray-600"
-                      }`}
+                    <span
+                      className={`ml-3 font-medium transition-opacity duration-200 ${
+                        isSidebarOpen ? "opacity-100" : "opacity-0 hidden"
+                      } ${isActive ? "text-blue-600" : "text-gray-600"}`}
                     >
                       {item.label}
-                    </motion.span>
+                    </span>
                     {!isSidebarOpen && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="fixed left-20 bg-gray-900 text-white px-2 py-1 rounded text-sm ml-2 z-50"
-                      >
+                      <div className="fixed left-20 bg-gray-900 text-white px-2 py-1 rounded text-sm ml-2 z-50">
                         {item.label}
-                      </motion.div>
+                      </div>
                     )}
-                  </motion.div>
+                  </div>
                 </Link>
               );
             })}
@@ -108,13 +90,17 @@ export default function ClientLayout({ children }) {
             <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
               <UserCircleIcon className="w-6 h-6 text-gray-500" />
             </div>
-            <motion.div variants={textVariants}>
+            <div
+              className={`transition-opacity duration-200 ${
+                isSidebarOpen ? "opacity-100" : "opacity-0 hidden"
+              }`}
+            >
               <p className="font-medium text-gray-700">John Doe</p>
               <p className="text-sm text-gray-500">Admin</p>
-            </motion.div>
+            </div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
@@ -122,6 +108,16 @@ export default function ClientLayout({ children }) {
         <header className="bg-white border-b border-gray-200">
           <div className="flex justify-between items-center px-6 py-4">
             <div className="flex items-center gap-4">
+              <button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                {isSidebarOpen ? (
+                  <XMarkIcon className="w-5 h-5 text-gray-500" />
+                ) : (
+                  <Bars3Icon className="w-5 h-5 text-gray-500" />
+                )}
+              </button>
               <h1 className="text-xl font-semibold text-gray-800">
                 {menuItems.find((item) => item.path === pathname)?.label ||
                   "Dashboard"}

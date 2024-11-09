@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import DashboardLayout from "../components/DashboardLayout";
 import {
   BuildingStorefrontIcon,
@@ -51,21 +50,6 @@ export default function StoresPage() {
     }
   }
 
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 },
-  };
-
   return (
     <DashboardLayout
       title="Stores"
@@ -80,32 +64,23 @@ export default function StoresPage() {
       }
     >
       <div className="p-6">
-        <motion.div
-          variants={container}
-          initial="hidden"
-          animate="show"
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6"
-        >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
           {loading
             ? [...Array(3)].map((_, i) => (
                 <div
                   key={i}
-                  className="animate-pulse bg-white/50 rounded-xl h-48 backdrop-blur-lg"
+                  className="animate-pulse bg-white rounded-xl h-48"
                 />
               ))
             : stores.map((store) => (
-                <motion.div
-                  key={store.id}
-                  variants={item}
-                  className="dashboard-card group"
-                >
+                <div key={store.id} className="dashboard-card group">
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h3 className="text-xl font-semibold text-gray-800">
+                      <h3 className="text-xl font-semibold text-[#323130]">
                         {store.name}
                       </h3>
                       {store.description && (
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-[#605e5c] mt-1">
                           {store.description}
                         </p>
                       )}
@@ -121,7 +96,7 @@ export default function StoresPage() {
                     </span>
                   </div>
 
-                  <div className="space-y-2 text-sm text-gray-600">
+                  <div className="space-y-2 text-sm text-[#605e5c]">
                     <p>{store.address}</p>
                     <p>{store.phone}</p>
                     {store.opening_time && store.closing_time && (
@@ -131,10 +106,10 @@ export default function StoresPage() {
                     )}
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end gap-2">
+                  <div className="mt-4 pt-4 border-t border-[#edebe9] flex justify-end gap-2">
                     <Link
                       href={`/dashboard/stores/${store.id}/edit`}
-                      className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                      className="text-[#0078d4] hover:text-[#106ebe] flex items-center gap-1"
                     >
                       <PencilIcon className="w-4 h-4" />
                       Edit
@@ -162,17 +137,17 @@ export default function StoresPage() {
                       )}
                     </button>
                   </div>
-                </motion.div>
+                </div>
               ))}
-        </motion.div>
+        </div>
 
         {stores.length === 0 && !loading && (
           <div className="text-center py-12">
-            <BuildingStorefrontIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">
+            <BuildingStorefrontIcon className="mx-auto h-12 w-12 text-[#605e5c]" />
+            <h3 className="mt-2 text-sm font-medium text-[#323130]">
               No stores
             </h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-[#605e5c]">
               Get started by creating a new store.
             </p>
           </div>
