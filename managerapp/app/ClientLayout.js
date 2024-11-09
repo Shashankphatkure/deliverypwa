@@ -2,78 +2,174 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
+import {
+  ChartBarIcon,
+  TruckIcon,
+  ShoppingBagIcon,
+  UserGroupIcon,
+  BanknotesIcon,
+  ExclamationTriangleIcon,
+  BellIcon,
+  Bars3Icon,
+  XMarkIcon,
+  MagnifyingGlassIcon,
+  UserCircleIcon,
+  ChevronRightIcon,
+} from "@heroicons/react/24/outline";
 
 export default function ClientLayout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const pathname = usePathname();
 
   const menuItems = [
-    { path: "/dashboard", label: "Dashboard", icon: "📊" },
-    { path: "/dashboard/drivers", label: "Drivers", icon: "🚗" },
-    { path: "/dashboard/orders", label: "Orders", icon: "📦" },
-    { path: "/dashboard/customers", label: "Customers", icon: "👥" },
-    { path: "/dashboard/payments", label: "Payments", icon: "💰" },
-    { path: "/dashboard/penalties", label: "Penalties", icon: "⚠️" },
-    { path: "/dashboard/notifications", label: "Notifications", icon: "🔔" },
+    { path: "/dashboard", label: "Dashboard", icon: ChartBarIcon },
+    { path: "/dashboard/drivers", label: "Drivers", icon: TruckIcon },
+    { path: "/dashboard/orders", label: "Orders", icon: ShoppingBagIcon },
+    { path: "/dashboard/customers", label: "Customers", icon: UserGroupIcon },
+    { path: "/dashboard/payments", label: "Payments", icon: BanknotesIcon },
+    {
+      path: "/dashboard/penalties",
+      label: "Penalties",
+      icon: ExclamationTriangleIcon,
+    },
+    {
+      path: "/dashboard/notifications",
+      label: "Notifications",
+      icon: BellIcon,
+    },
   ];
 
+  const sidebarVariants = {
+    open: { width: "280px", transition: { duration: 0.3 } },
+    closed: { width: "80px", transition: { duration: 0.3 } },
+  };
+
+  const textVariants = {
+    open: { opacity: 1, x: 0, display: "block" },
+    closed: { opacity: 0, x: -10, display: "none" },
+  };
+
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <div
-        className={`${
-          isSidebarOpen ? "w-64" : "w-20"
-        } bg-white shadow-lg transition-all duration-300 ease-in-out`}
+      <motion.div
+        initial="open"
+        animate={isSidebarOpen ? "open" : "closed"}
+        variants={sidebarVariants}
+        className="bg-white border-r border-gray-200 relative"
       >
-        <div className="p-4">
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="w-full text-left mb-4"
-          >
-            {isSidebarOpen ? (
-              <h1 className="text-xl font-bold">Manager App</h1>
-            ) : (
-              <span className="text-xl">📱</span>
-            )}
-          </button>
-          <nav className="space-y-2">
-            {menuItems.map((item) => (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`flex items-center p-2 rounded-lg ${
-                  pathname === item.path
-                    ? "bg-blue-50 text-blue-700"
-                    : "hover:bg-gray-50"
-                }`}
-              >
-                <span className="mr-3">{item.icon}</span>
-                {isSidebarOpen && <span>{item.label}</span>}
-              </Link>
-            ))}
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-8">
+            <motion.div
+              variants={textVariants}
+              className="flex items-center gap-2"
+            >
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold">M</span>
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+                Manager App
+              </span>
+            </motion.div>
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              {isSidebarOpen ? (
+                <ChevronRightIcon className="w-5 h-5 text-gray-500" />
+              ) : (
+                <Bars3Icon className="w-5 h-5 text-gray-500" />
+              )}
+            </button>
+          </div>
+
+          <nav className="space-y-1">
+            {menuItems.map((item) => {
+              const isActive = pathname === item.path;
+              return (
+                <Link key={item.path} href={item.path}>
+                  <motion.div
+                    whileHover={{ x: 6 }}
+                    className={`flex items-center px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 ${
+                      isActive
+                        ? "bg-blue-50 text-blue-600"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-blue-600"
+                    }`}
+                  >
+                    <item.icon
+                      className={`w-5 h-5 ${
+                        isActive ? "text-blue-600" : "text-gray-500"
+                      }`}
+                    />
+                    <motion.span
+                      variants={textVariants}
+                      className={`ml-3 font-medium ${
+                        isActive ? "text-blue-600" : "text-gray-600"
+                      }`}
+                    >
+                      {item.label}
+                    </motion.span>
+                    {!isSidebarOpen && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="fixed left-20 bg-gray-900 text-white px-2 py-1 rounded text-sm ml-2 z-50"
+                      >
+                        {item.label}
+                      </motion.div>
+                    )}
+                  </motion.div>
+                </Link>
+              );
+            })}
           </nav>
         </div>
-      </div>
+
+        {/* User Profile Section */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+              <UserCircleIcon className="w-6 h-6 text-gray-500" />
+            </div>
+            <motion.div variants={textVariants}>
+              <p className="font-medium text-gray-700">John Doe</p>
+              <p className="text-sm text-gray-500">Admin</p>
+            </motion.div>
+          </div>
+        </div>
+      </motion.div>
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
         {/* Top Navigation */}
-        <header className="bg-white shadow-sm">
-          <div className="flex justify-between items-center p-4">
-            <h1 className="text-xl font-semibold">
-              {menuItems.find((item) => item.path === pathname)?.label ||
-                "Dashboard"}
-            </h1>
-            <div className="flex items-center space-x-4">
-              <button className="p-2 hover:bg-gray-100 rounded-full">🔍</button>
-              <button className="p-2 hover:bg-gray-100 rounded-full">🔔</button>
-              <button className="p-2 hover:bg-gray-100 rounded-full">👤</button>
+        <header className="bg-white border-b border-gray-200">
+          <div className="flex justify-between items-center px-6 py-4">
+            <div className="flex items-center gap-4">
+              <h1 className="text-xl font-semibold text-gray-800">
+                {menuItems.find((item) => item.path === pathname)?.label ||
+                  "Dashboard"}
+              </h1>
+            </div>
+            <div className="flex items-center gap-4">
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <MagnifyingGlassIcon className="w-5 h-5 text-gray-500" />
+              </button>
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
+                <BellIcon className="w-5 h-5 text-gray-500" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              </button>
+              <div className="h-6 w-px bg-gray-200"></div>
+              <button className="flex items-center gap-2 hover:bg-gray-100 rounded-lg px-3 py-2 transition-colors">
+                <UserCircleIcon className="w-5 h-5 text-gray-500" />
+                <span className="text-sm text-gray-700">Profile</span>
+              </button>
             </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="p-4">{children}</main>
+        <main className="p-6">{children}</main>
       </div>
     </div>
   );
