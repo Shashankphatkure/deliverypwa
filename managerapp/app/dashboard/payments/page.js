@@ -196,9 +196,12 @@ export default function PaymentsPage() {
                       {new Date(payment.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <button className="text-blue-600 hover:text-blue-900">
+                      <Link
+                        href={`/dashboard/payments/${payment.id}`}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
                         View Details
-                      </button>
+                      </Link>
                     </td>
                   </tr>
                 ))}
