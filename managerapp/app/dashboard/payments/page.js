@@ -13,6 +13,7 @@ import {
   FunnelIcon,
   ArrowsUpDownIcon,
   PlusIcon,
+  MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 
 export default function PaymentsPage() {
