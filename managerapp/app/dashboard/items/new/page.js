@@ -2,17 +2,17 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import DashboardLayout from "../../components/DashboardLayout";
 import {
-  ShoppingBagIcon,
   BuildingStorefrontIcon,
-  TagIcon,
-  CurrencyDollarIcon,
+  DocumentTextIcon,
+  MapPinIcon,
+  PhoneIcon,
+  ClockIcon,
   PhotoIcon,
   ArrowLeftIcon,
   PlusIcon,
-  DocumentTextIcon,
+  ShoppingBagIcon,
 } from "@heroicons/react/24/outline";
 
 export default function NewMenuItemPage() {
@@ -158,7 +158,7 @@ export default function NewMenuItemPage() {
       type: "select",
       value: item.category_id,
       onChange: (value) => setItem({ ...item, category_id: value }),
-      icon: TagIcon,
+      icon: MapPinIcon,
       options: categories.map((category) => ({
         value: category.id,
         label: category.name,
@@ -188,7 +188,7 @@ export default function NewMenuItemPage() {
       type: "number",
       value: item.price,
       onChange: (value) => setItem({ ...item, price: value }),
-      icon: CurrencyDollarIcon,
+      icon: PhoneIcon,
       prefix: "$",
       required: true,
     },
@@ -215,38 +215,29 @@ export default function NewMenuItemPage() {
         </button>
       }
     >
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-2xl mx-auto p-6"
-      >
+      <div className="max-w-2xl mx-auto p-6">
         {loading ? (
           <div className="space-y-4">
             {[...Array(6)].map((_, i) => (
               <div
                 key={i}
-                className="animate-pulse bg-white/50 rounded-xl h-16 backdrop-blur-lg"
+                className="animate-pulse bg-[#f3f2f1] rounded h-16"
               />
             ))}
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
             {formFields.map((field) => (
-              <motion.div
-                key={field.label}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="dashboard-card"
-              >
+              <div key={field.label} className="dashboard-card">
                 <div className="flex justify-between items-center mb-2">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-[#323130]">
                     {field.label}
                   </label>
                   {field.addNew && (
                     <button
                       type="button"
                       onClick={field.addNew.action}
-                      className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                      className="text-sm text-[#0078d4] hover:text-[#106ebe] flex items-center gap-1"
                     >
                       <PlusIcon className="w-4 h-4" />
                       {field.addNew.label}
@@ -255,7 +246,7 @@ export default function NewMenuItemPage() {
                 </div>
                 <div className="relative rounded-md shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <field.icon className="h-5 w-5 text-gray-400" />
+                    <field.icon className="h-5 w-5 text-[#605e5c]" />
                   </div>
                   {field.type === "select" ? (
                     <select
@@ -302,14 +293,10 @@ export default function NewMenuItemPage() {
                     </div>
                   )}
                 </div>
-              </motion.div>
+              </div>
             ))}
 
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="dashboard-card"
-            >
+            <div className="dashboard-card">
               <label className="flex items-center space-x-3">
                 <input
                   type="checkbox"
@@ -317,20 +304,15 @@ export default function NewMenuItemPage() {
                   onChange={(e) =>
                     setItem({ ...item, is_available: e.target.checked })
                   }
-                  className="form-checkbox h-5 w-5 text-blue-600"
+                  className="form-checkbox h-5 w-5 text-[#0078d4]"
                 />
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-[#323130]">
                   Available for Order
                 </span>
               </label>
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="flex justify-end space-x-4"
-            >
+            <div className="flex justify-end">
               <button
                 type="submit"
                 disabled={submitting}
@@ -339,22 +321,14 @@ export default function NewMenuItemPage() {
                 <ShoppingBagIcon className="w-5 h-5" />
                 {submitting ? "Adding..." : "Add Item"}
               </button>
-            </motion.div>
+            </div>
           </form>
         )}
 
         {/* Category Modal */}
         {showCategoryModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
-          >
-            <motion.div
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              className="bg-white p-6 rounded-xl w-96 shadow-xl"
-            >
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-xl w-96 shadow-xl">
               <h2 className="text-xl font-bold mb-4">Add New Category</h2>
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-1">
@@ -387,10 +361,10 @@ export default function NewMenuItemPage() {
                   Cancel
                 </button>
               </div>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         )}
-      </motion.div>
+      </div>
     </DashboardLayout>
   );
 }

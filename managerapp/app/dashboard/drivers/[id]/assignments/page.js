@@ -2,17 +2,16 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import { use } from "react";
 import DashboardLayout from "../../../components/DashboardLayout";
 import {
-  TruckIcon,
-  UserIcon,
-  MapPinIcon,
-  ClockIcon,
-  BuildingStorefrontIcon,
+  ArrowPathIcon,
+  UserGroupIcon,
+  DocumentTextIcon,
   ArrowLeftIcon,
-  ArrowTopRightOnSquareIcon,
+  TruckIcon,
+  MapPinIcon,
+  PhoneIcon,
 } from "@heroicons/react/24/outline";
 
 export default function DriverAssignmentsPage({ params }) {
@@ -98,32 +97,26 @@ export default function DriverAssignmentsPage({ params }) {
         </button>
       }
     >
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="p-6"
-      >
+      <div className="p-6">
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[...Array(6)].map((_, i) => (
               <div
                 key={i}
-                className="animate-pulse bg-white/50 rounded-xl h-48 backdrop-blur-lg"
+                className="animate-pulse bg-[#f3f2f1] rounded h-48"
               />
             ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {assignments.map((assignment) => (
-              <motion.div
+              <div
                 key={assignment.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
                 className="dashboard-card hover:shadow-lg transition-shadow"
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-2">
-                    <TruckIcon className="w-5 h-5 text-gray-400" />
+                    <TruckIcon className="w-5 h-5 text-[#605e5c]" />
                     <span className="font-medium">
                       Order #{assignment.orders.id.slice(0, 8)}
                     </span>
@@ -139,43 +132,43 @@ export default function DriverAssignmentsPage({ params }) {
 
                 <div className="space-y-3 text-sm">
                   <div className="flex items-start gap-2">
-                    <BuildingStorefrontIcon className="w-5 h-5 text-gray-400 shrink-0" />
+                    <BuildingStorefrontIcon className="w-5 h-5 text-[#605e5c] shrink-0" />
                     <span>{assignment.orders.stores.name}</span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <MapPinIcon className="w-5 h-5 text-gray-400 shrink-0" />
-                    <span className="text-gray-600">
+                    <MapPinIcon className="w-5 h-5 text-[#605e5c] shrink-0" />
+                    <span className="text-[#605e5c]">
                       {assignment.orders.delivery_address}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <ClockIcon className="w-5 h-5 text-gray-400" />
-                    <span className="text-gray-600">
+                    <ClockIcon className="w-5 h-5 text-[#605e5c]" />
+                    <span className="text-[#605e5c]">
                       {new Date(assignment.created_at).toLocaleString()}
                     </span>
                   </div>
                 </div>
 
-                <div className="mt-4 pt-4 border-t">
+                <div className="mt-4 pt-4 border-t border-[#edebe9]">
                   <a
                     href={`/dashboard/orders/${assignment.orders.id}/view`}
-                    className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                    className="text-[#0078d4] hover:text-[#106ebe] flex items-center gap-1"
                   >
                     View Details
                     <ArrowTopRightOnSquareIcon className="w-4 h-4" />
                   </a>
                 </div>
-              </motion.div>
+              </div>
             ))}
 
             {assignments.length === 0 && (
-              <div className="col-span-full text-center py-12 text-gray-500">
+              <div className="col-span-full text-center py-12 text-[#605e5c]">
                 No assignments found for this driver
               </div>
             )}
           </div>
         )}
-      </motion.div>
+      </div>
     </DashboardLayout>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { motion } from "framer-motion";
+import Link from "next/link";
 import DashboardLayout from "../components/DashboardLayout";
 import CustomerStats from "./components/CustomerStats";
 import {
@@ -16,7 +16,7 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     search: "",
-    orderCount: "all", // all, none, active
+    orderCount: "all",
     sortBy: "created_at",
   });
   const supabase = createClientComponentClient();
@@ -61,10 +61,9 @@ export default function CustomersPage() {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout title="Customer Management">
       <div className="p-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-4">Customer Management</h1>
           <CustomerStats />
         </div>
 
@@ -102,18 +101,22 @@ export default function CustomersPage() {
               <option value="email">Email</option>
             </select>
           </div>
-          <a
+          <Link
             href="/dashboard/customers/new"
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            className="dashboard-button-primary"
           >
             Add New Customer
-          </a>
+          </Link>
         </div>
 
         {loading ? (
-          <p>Loading...</p>
+          <div className="animate-pulse space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-16 bg-[#f3f2f1] rounded" />
+            ))}
+          </div>
         ) : (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
             <table className="min-w-full">
               <thead className="bg-gray-50">
                 <tr>
@@ -149,18 +152,18 @@ export default function CustomersPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="space-x-2">
-                        <a
+                        <Link
                           href={`/dashboard/customers/${customer.id}`}
                           className="text-blue-600 hover:text-blue-900"
                         >
                           View
-                        </a>
-                        <a
+                        </Link>
+                        <Link
                           href={`/dashboard/customers/${customer.id}/orders`}
                           className="text-green-600 hover:text-green-900"
                         >
                           Orders
-                        </a>
+                        </Link>
                       </div>
                     </td>
                   </tr>
