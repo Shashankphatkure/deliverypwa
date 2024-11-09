@@ -34,18 +34,7 @@ export default function ViewOrderPage({ params }) {
           `
           *,
           users (full_name, phone),
-          stores (name, address, phone),
-          order_items (
-            quantity,
-            price_at_time,
-            menu_items (name)
-          ),
-          delivery_assignments (
-            status,
-            pickup_time,
-            delivery_time,
-            delivery_personnel (full_name, phone)
-          )
+          delivery_personnel (full_name, phone)
         `
         )
         .eq("id", id)

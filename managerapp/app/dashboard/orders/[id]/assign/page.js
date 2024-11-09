@@ -67,17 +67,23 @@ export default function AssignOrderPage({ params }) {
     setAssigning(true);
 
     try {
-      const { error: assignmentError } = await supabase
-        .from("delivery_assignments")
-        .insert([
-          {
-            order_id: id,
-            delivery_personnel_id: selectedDriver,
-            status: "assigned",
-          },
-        ]);
+      const { data: driverData } = await supabase
+        .from("delivery_personnel")
+        .select("full_name, email")
+        .eq("id", selectedDriver)
+        .single();
 
-      if (assignmentError) throw assignmentError;
+      const { error: updateError } = await supabase
+        .from("orders")
+        .update({
+          driverid: selectedDriver,
+          drivername: driverData.full_name,
+          driveremail: driverData.email,
+          status: "confirmed",
+        })
+        .eq("id", id);
+
+      if (updateError) throw updateError;
 
       const { error: notificationError } = await supabase
         .from("notifications")

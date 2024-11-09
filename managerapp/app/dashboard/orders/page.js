@@ -10,6 +10,27 @@ import {
   BanknotesIcon,
 } from "@heroicons/react/24/outline";
 
+const getPaymentStatusColor = (status) => {
+  const colors = {
+    pending: "bg-yellow-100 text-yellow-800",
+    completed: "bg-green-100 text-green-800",
+    failed: "bg-red-100 text-red-800",
+  };
+  return colors[status] || "bg-gray-100 text-gray-800";
+};
+
+const getStatusColor = (status) => {
+  const colors = {
+    pending: "bg-yellow-100 text-yellow-800",
+    confirmed: "bg-blue-100 text-blue-800",
+    preparing: "bg-purple-100 text-purple-800",
+    picked_up: "bg-indigo-100 text-indigo-800",
+    delivered: "bg-green-100 text-green-800",
+    cancelled: "bg-red-100 text-red-800",
+  };
+  return colors[status] || "bg-gray-100 text-gray-800";
+};
+
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -77,11 +98,7 @@ export default function OrdersPage() {
           `
           *,
           users (full_name, phone),
-          stores (name),
-          delivery_assignments (
-            id,
-            delivery_personnel (id, full_name)
-          )
+          delivery_personnel (full_name, phone)
         `
         )
         .eq("status", activeTab)
@@ -95,18 +112,6 @@ export default function OrdersPage() {
       setLoading(false);
     }
   }
-
-  const getStatusColor = (status) => {
-    const colors = {
-      pending: "bg-yellow-100 text-yellow-800",
-      confirmed: "bg-blue-100 text-blue-800",
-      preparing: "bg-purple-100 text-purple-800",
-      picked_up: "bg-indigo-100 text-indigo-800",
-      delivered: "bg-green-100 text-green-800",
-      cancelled: "bg-red-100 text-red-800",
-    };
-    return colors[status] || "bg-gray-100 text-gray-800";
-  };
 
   const statsCards = [
     {
@@ -205,61 +210,59 @@ export default function OrdersPage() {
             <table className="min-w-full divide-y divide-[#edebe9]">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Order ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Customer
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Store
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Driver
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Actions
-                  </th>
+                  <th>Order ID</th>
+                  <th>Customer</th>
+                  <th>Driver</th>
+                  <th>Start</th>
+                  <th>Destination</th>
+                  <th>Amount</th>
+                  <th>Payment Status</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody>
                 {orders.map((order) => (
                   <tr key={order.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      #{order.id.slice(0, 8)}
-                    </td>
-                    <td className="px-6 py-4">
+                    <td>#{order.id}</td>
+                    <td>
                       <div>
-                        <p className="font-medium">{order.users?.full_name}</p>
+                        <p className="font-medium">{order.customername}</p>
                         <p className="text-sm text-gray-500">
                           {order.users?.phone}
                         </p>
                       </div>
                     </td>
-                    <td className="px-6 py-4">{order.stores?.name}</td>
-                    <td className="px-6 py-4">
-                      ${parseFloat(order.total_amount).toFixed(2)}
+                    <td>
+                      <div>
+                        <p className="font-medium">{order.drivername}</p>
+                        <p className="text-sm text-gray-500">
+                          {order.delivery_personnel?.phone}
+                        </p>
+                      </div>
                     </td>
-                    <td className="px-6 py-4">
-                      {order.delivery_assignments?.[0]?.delivery_personnel
-                        ?.full_name || "Unassigned"}
-                    </td>
-                    <td className="px-6 py-4">
+                    <td>{order.start}</td>
+                    <td>{order.destination}</td>
+                    <td>${parseFloat(order.total_amount || 0).toFixed(2)}</td>
+                    <td>
                       <span
-                        className={`px-2 py-1 rounded-full text-xs ${getStatusColor(
+                        className={`status-badge ${getPaymentStatusColor(
+                          order.payment_status
+                        )}`}
+                      >
+                        {order.payment_status}
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        className={`status-badge ${getStatusColor(
                           order.status
                         )}`}
                       >
                         {order.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td>
                       <div className="space-x-2">
                         <Link
                           href={`/dashboard/orders/${order.id}/view`}
