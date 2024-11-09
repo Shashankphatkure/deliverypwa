@@ -11,6 +11,7 @@ import {
   ArrowLeftIcon,
   CalculatorIcon,
   CalendarIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 
 export default function NewPaymentPage() {
@@ -34,7 +35,7 @@ export default function NewPaymentPage() {
     try {
       const { data, error } = await supabase
         .from("delivery_personnel")
-        .select("id, full_name")
+        .select("id, full_name, phone")
         .eq("is_active", true);
 
       if (error) throw error;
@@ -51,7 +52,6 @@ export default function NewPaymentPage() {
     setProcessing(true);
 
     try {
-      // Create payment record
       const { error: paymentError } = await supabase
         .from("driver_payments")
         .insert([
@@ -64,7 +64,6 @@ export default function NewPaymentPage() {
 
       if (paymentError) throw paymentError;
 
-      // Create notification for driver
       await supabase.from("notifications").insert([
         {
           recipient_type: "driver",
@@ -84,90 +83,170 @@ export default function NewPaymentPage() {
     }
   }
 
-  if (loading) return <div className="p-6">Loading...</div>;
+  const formFields = [
+    {
+      label: "Driver",
+      type: "select",
+      value: payment.driver_id,
+      onChange: (value) => setPayment({ ...payment, driver_id: value }),
+      icon: UserGroupIcon,
+      options: drivers.map((driver) => ({
+        value: driver.id,
+        label: `${driver.full_name} (${driver.phone})`,
+      })),
+    },
+    {
+      label: "Amount",
+      type: "number",
+      value: payment.amount,
+      onChange: (value) => setPayment({ ...payment, amount: value }),
+      icon: CalculatorIcon,
+      prefix: "$",
+    },
+    {
+      label: "Payment Type",
+      type: "select",
+      value: payment.payment_type,
+      onChange: (value) => setPayment({ ...payment, payment_type: value }),
+      icon: BanknotesIcon,
+      options: [
+        { value: "salary", label: "Salary" },
+        { value: "bonus", label: "Bonus" },
+        { value: "penalty", label: "Penalty" },
+      ],
+    },
+    {
+      label: "Description",
+      type: "textarea",
+      value: payment.description,
+      onChange: (value) => setPayment({ ...payment, description: value }),
+      icon: DocumentTextIcon,
+    },
+  ];
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Process New Payment</h1>
+    <DashboardLayout
+      title="Process New Payment"
+      actions={
+        <button
+          onClick={() => router.push("/dashboard/payments")}
+          className="dashboard-button-secondary flex items-center gap-2"
+        >
+          <ArrowLeftIcon className="w-5 h-5" />
+          Back to Payments
+        </button>
+      }
+    >
+      <div className="p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-2xl mx-auto"
+        >
+          {loading ? (
+            <div className="space-y-4">
+              {[...Array(4)].map((_, i) => (
+                <div
+                  key={i}
+                  className="animate-pulse bg-white/50 rounded-xl h-16 backdrop-blur-lg"
+                />
+              ))}
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {formFields.map((field) => (
+                <motion.div
+                  key={field.label}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="dashboard-card"
+                >
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {field.label}
+                  </label>
+                  <div className="relative rounded-md shadow-sm">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <field.icon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </div>
+                    {field.type === "select" ? (
+                      <select
+                        value={field.value}
+                        onChange={(e) => field.onChange(e.target.value)}
+                        className="dashboard-input pl-10"
+                        required
+                      >
+                        <option value="">Select {field.label}</option>
+                        {field.options.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : field.type === "textarea" ? (
+                      <textarea
+                        value={field.value}
+                        onChange={(e) => field.onChange(e.target.value)}
+                        className="dashboard-input pl-10"
+                        rows={4}
+                        required
+                        placeholder={`Enter ${field.label.toLowerCase()}...`}
+                      />
+                    ) : (
+                      <div className="relative">
+                        {field.prefix && (
+                          <div className="absolute inset-y-0 left-10 flex items-center pointer-events-none">
+                            <span className="text-gray-500">
+                              {field.prefix}
+                            </span>
+                          </div>
+                        )}
+                        <input
+                          type={field.type}
+                          value={field.value}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          className={`dashboard-input ${
+                            field.prefix ? "pl-14" : "pl-10"
+                          }`}
+                          required
+                          placeholder={`Enter ${field.label.toLowerCase()}...`}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
 
-      <form onSubmit={handleSubmit} className="max-w-lg">
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Driver</label>
-          <select
-            value={payment.driver_id}
-            onChange={(e) =>
-              setPayment({ ...payment, driver_id: e.target.value })
-            }
-            className="w-full p-2 border rounded"
-            required
-          >
-            <option value="">Select Driver</option>
-            {drivers.map((driver) => (
-              <option key={driver.id} value={driver.id}>
-                {driver.full_name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Amount</label>
-          <input
-            type="number"
-            step="0.01"
-            value={payment.amount}
-            onChange={(e) => setPayment({ ...payment, amount: e.target.value })}
-            className="w-full p-2 border rounded"
-            required
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Payment Type</label>
-          <select
-            value={payment.payment_type}
-            onChange={(e) =>
-              setPayment({ ...payment, payment_type: e.target.value })
-            }
-            className="w-full p-2 border rounded"
-            required
-          >
-            <option value="salary">Salary</option>
-            <option value="bonus">Bonus</option>
-            <option value="penalty">Penalty</option>
-          </select>
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Description</label>
-          <textarea
-            value={payment.description}
-            onChange={(e) =>
-              setPayment({ ...payment, description: e.target.value })
-            }
-            className="w-full p-2 border rounded"
-            rows={3}
-            required
-          />
-        </div>
-
-        <div className="flex gap-4">
-          <button
-            type="submit"
-            disabled={processing}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-300"
-          >
-            {processing ? "Processing..." : "Process Payment"}
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push("/dashboard/payments")}
-            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
-    </div>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="flex justify-end"
+              >
+                <button
+                  type="submit"
+                  disabled={processing}
+                  className="dashboard-button-primary flex items-center gap-2"
+                >
+                  {processing ? (
+                    <>
+                      <ArrowPathIcon className="w-5 h-5 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <BanknotesIcon className="w-5 h-5" />
+                      Process Payment
+                    </>
+                  )}
+                </button>
+              </motion.div>
+            </form>
+          )}
+        </motion.div>
+      </div>
+    </DashboardLayout>
   );
 }

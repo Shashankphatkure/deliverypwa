@@ -2,6 +2,17 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import Link from "next/link";
+import { motion } from "framer-motion";
+import DashboardLayout from "../components/DashboardLayout";
+import {
+  ShoppingBagIcon,
+  BuildingStorefrontIcon,
+  TagIcon,
+  CurrencyDollarIcon,
+  PlusIcon,
+  MagnifyingGlassIcon,
+  FunnelIcon,
+} from "@heroicons/react/24/outline";
 
 export default function MenuItemsPage() {
   const [items, setItems] = useState([]);
