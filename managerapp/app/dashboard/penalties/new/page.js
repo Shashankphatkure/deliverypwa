@@ -2,6 +2,14 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import DashboardLayout from "../../components/DashboardLayout";
+import {
+  ExclamationTriangleIcon,
+  UserGroupIcon,
+  CurrencyDollarIcon,
+  DocumentTextIcon,
+} from "@heroicons/react/24/outline";
 
 export default function NewPenaltyPage() {
   const router = useRouter();
@@ -40,20 +48,17 @@ export default function NewPenaltyPage() {
     setSubmitting(true);
 
     try {
-      // Create penalty record without manager authentication
       const { error: penaltyError } = await supabase.from("penalties").insert([
         {
           driver_id: penalty.driver_id,
           amount: penalty.amount,
           reason: penalty.reason,
           status: "pending",
-          // Removing the created_by field since we're not tracking the manager
         },
       ]);
 
       if (penaltyError) throw penaltyError;
 
-      // Create notification for driver
       const { error: notificationError } = await supabase
         .from("notifications")
         .insert([
@@ -77,72 +82,131 @@ export default function NewPenaltyPage() {
     }
   }
 
-  if (loading) return <div className="p-6">Loading...</div>;
+  const formFields = [
+    {
+      label: "Driver",
+      type: "select",
+      value: penalty.driver_id,
+      onChange: (value) => setPenalty({ ...penalty, driver_id: value }),
+      icon: UserGroupIcon,
+      options: drivers.map((driver) => ({
+        value: driver.id,
+        label: driver.full_name,
+      })),
+    },
+    {
+      label: "Amount",
+      type: "number",
+      value: penalty.amount,
+      onChange: (value) => setPenalty({ ...penalty, amount: value }),
+      icon: CurrencyDollarIcon,
+      prefix: "$",
+    },
+    {
+      label: "Reason",
+      type: "textarea",
+      value: penalty.reason,
+      onChange: (value) => setPenalty({ ...penalty, reason: value }),
+      icon: DocumentTextIcon,
+    },
+  ];
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Add New Penalty</h1>
+    <DashboardLayout
+      title="Add New Penalty"
+      actions={
+        <button
+          onClick={() => router.push("/dashboard/penalties")}
+          className="dashboard-button-secondary"
+        >
+          Cancel
+        </button>
+      }
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-2xl mx-auto p-6"
+      >
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {formFields.map((field) => (
+            <motion.div
+              key={field.label}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="space-y-1"
+            >
+              <label className="block text-sm font-medium text-gray-700">
+                {field.label}
+              </label>
+              <div className="relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <field.icon
+                    className="h-5 w-5 text-gray-400"
+                    aria-hidden="true"
+                  />
+                </div>
+                {field.type === "select" ? (
+                  <select
+                    value={field.value}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    className="dashboard-input pl-10"
+                    required
+                  >
+                    <option value="">Select Driver</option>
+                    {field.options.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : field.type === "textarea" ? (
+                  <textarea
+                    value={field.value}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    className="dashboard-input pl-10"
+                    rows={4}
+                    required
+                  />
+                ) : (
+                  <div className="relative">
+                    {field.prefix && (
+                      <div className="absolute inset-y-0 left-10 flex items-center pointer-events-none">
+                        <span className="text-gray-500">{field.prefix}</span>
+                      </div>
+                    )}
+                    <input
+                      type={field.type}
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      className={`dashboard-input ${
+                        field.prefix ? "pl-14" : "pl-10"
+                      }`}
+                      required
+                    />
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ))}
 
-      <form onSubmit={handleSubmit} className="max-w-lg">
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Driver</label>
-          <select
-            value={penalty.driver_id}
-            onChange={(e) =>
-              setPenalty({ ...penalty, driver_id: e.target.value })
-            }
-            className="w-full p-2 border rounded"
-            required
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="flex justify-end space-x-4"
           >
-            <option value="">Select Driver</option>
-            {drivers.map((driver) => (
-              <option key={driver.id} value={driver.id}>
-                {driver.full_name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Amount</label>
-          <input
-            type="number"
-            step="0.01"
-            value={penalty.amount}
-            onChange={(e) => setPenalty({ ...penalty, amount: e.target.value })}
-            className="w-full p-2 border rounded"
-            required
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Reason</label>
-          <textarea
-            value={penalty.reason}
-            onChange={(e) => setPenalty({ ...penalty, reason: e.target.value })}
-            className="w-full p-2 border rounded"
-            rows={3}
-            required
-          />
-        </div>
-
-        <div className="flex gap-4">
-          <button
-            type="submit"
-            disabled={submitting}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-300"
-          >
-            {submitting ? "Adding..." : "Add Penalty"}
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push("/dashboard/penalties")}
-            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
-    </div>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="dashboard-button-primary flex items-center gap-2"
+            >
+              <ExclamationTriangleIcon className="w-5 h-5" />
+              {submitting ? "Adding..." : "Add Penalty"}
+            </button>
+          </motion.div>
+        </form>
+      </motion.div>
+    </DashboardLayout>
   );
 }

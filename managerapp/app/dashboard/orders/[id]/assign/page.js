@@ -2,7 +2,15 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { use } from "react";
+import DashboardLayout from "../../../components/DashboardLayout";
+import {
+  TruckIcon,
+  UserGroupIcon,
+  BellAlertIcon,
+  ArrowLeftIcon,
+} from "@heroicons/react/24/outline";
 
 export default function AssignOrderPage({ params }) {
   const router = useRouter();
@@ -12,16 +20,38 @@ export default function AssignOrderPage({ params }) {
   const [selectedDriver, setSelectedDriver] = useState("");
   const [loading, setLoading] = useState(true);
   const [assigning, setAssigning] = useState(false);
+  const [orderDetails, setOrderDetails] = useState(null);
 
   useEffect(() => {
-    fetchDrivers();
+    Promise.all([fetchDrivers(), fetchOrderDetails()]);
   }, []);
+
+  async function fetchOrderDetails() {
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .select(
+          `
+          *,
+          stores (name, address),
+          users (full_name, phone)
+        `
+        )
+        .eq("id", id)
+        .single();
+
+      if (error) throw error;
+      setOrderDetails(data);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  }
 
   async function fetchDrivers() {
     try {
       const { data, error } = await supabase
         .from("delivery_personnel")
-        .select("id, full_name")
+        .select("id, full_name, phone, is_active")
         .eq("is_active", true);
 
       if (error) throw error;
@@ -38,7 +68,6 @@ export default function AssignOrderPage({ params }) {
     setAssigning(true);
 
     try {
-      // Create delivery assignment
       const { error: assignmentError } = await supabase
         .from("delivery_assignments")
         .insert([
@@ -51,7 +80,6 @@ export default function AssignOrderPage({ params }) {
 
       if (assignmentError) throw assignmentError;
 
-      // Create notification for driver
       const { error: notificationError } = await supabase
         .from("notifications")
         .insert([
@@ -75,51 +103,114 @@ export default function AssignOrderPage({ params }) {
     }
   }
 
-  if (loading) return <div className="p-6">Loading...</div>;
-
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">
-        Assign Order #{id.slice(0, 8)}
-      </h1>
+    <DashboardLayout
+      title={`Assign Order #${id.slice(0, 8)}`}
+      actions={
+        <button
+          onClick={() => router.push("/dashboard/orders")}
+          className="dashboard-button-secondary flex items-center gap-2"
+        >
+          <ArrowLeftIcon className="w-5 h-5" />
+          Back to Orders
+        </button>
+      }
+    >
+      <div className="p-6">
+        <div className="max-w-3xl mx-auto">
+          {/* Order Details Card */}
+          {orderDetails && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="dashboard-card mb-6"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <TruckIcon className="w-6 h-6 text-gray-400" />
+                <h2 className="text-lg font-semibold">Order Details</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-500">Customer</p>
+                  <p className="font-medium">{orderDetails.users?.full_name}</p>
+                  <p className="text-gray-600">{orderDetails.users?.phone}</p>
+                </div>
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-500">Store</p>
+                  <p className="font-medium">{orderDetails.stores?.name}</p>
+                  <p className="text-gray-600">
+                    {orderDetails.stores?.address}
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-500">Delivery Address</p>
+                  <p className="text-gray-600">
+                    {orderDetails.delivery_address}
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-500">Amount</p>
+                  <p className="font-medium">
+                    ${parseFloat(orderDetails.total_amount).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
-      <form onSubmit={handleAssign} className="max-w-lg">
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">
-            Select Driver
-          </label>
-          <select
-            value={selectedDriver}
-            onChange={(e) => setSelectedDriver(e.target.value)}
-            className="w-full p-2 border rounded"
-            required
+          {/* Driver Selection Form */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="dashboard-card"
           >
-            <option value="">Choose a driver</option>
-            {drivers.map((driver) => (
-              <option key={driver.id} value={driver.id}>
-                {driver.full_name}
-              </option>
-            ))}
-          </select>
-        </div>
+            <div className="flex items-center gap-2 mb-6">
+              <UserGroupIcon className="w-6 h-6 text-gray-400" />
+              <h2 className="text-lg font-semibold">Select Driver</h2>
+            </div>
 
-        <div className="flex gap-4">
-          <button
-            type="submit"
-            disabled={assigning}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-300"
-          >
-            {assigning ? "Assigning..." : "Assign Order"}
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push("/dashboard/orders")}
-            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-          >
-            Cancel
-          </button>
+            {loading ? (
+              <div className="animate-pulse space-y-4">
+                <div className="h-10 bg-gray-200 rounded"></div>
+                <div className="h-10 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            ) : (
+              <form onSubmit={handleAssign} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Available Drivers
+                  </label>
+                  <select
+                    value={selectedDriver}
+                    onChange={(e) => setSelectedDriver(e.target.value)}
+                    className="dashboard-input"
+                    required
+                  >
+                    <option value="">Choose a driver</option>
+                    {drivers.map((driver) => (
+                      <option key={driver.id} value={driver.id}>
+                        {driver.full_name} - {driver.phone}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={assigning}
+                    className="dashboard-button-primary flex items-center gap-2"
+                  >
+                    <BellAlertIcon className="w-5 h-5" />
+                    {assigning ? "Assigning..." : "Assign Order"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </motion.div>
         </div>
-      </form>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

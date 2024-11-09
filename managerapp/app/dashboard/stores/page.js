@@ -2,6 +2,14 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import Link from "next/link";
+import { motion } from "framer-motion";
+import DashboardLayout from "../components/DashboardLayout";
+import {
+  BuildingStorefrontIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  PencilIcon,
+} from "@heroicons/react/24/outline";
 
 export default function StoresPage() {
   const [stores, setStores] = useState([]);
@@ -36,113 +44,140 @@ export default function StoresPage() {
         .eq("id", storeId);
 
       if (error) throw error;
-      fetchStores(); // Refresh the list
+      fetchStores();
     } catch (error) {
       console.error("Error updating store status:", error);
       alert("Error updating store status");
     }
   }
 
-  if (loading) return <div className="p-6">Loading...</div>;
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 },
+  };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Stores</h1>
+    <DashboardLayout
+      title="Stores"
+      actions={
         <Link
           href="/dashboard/stores/new"
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          className="dashboard-button-primary flex items-center gap-2"
         >
+          <BuildingStorefrontIcon className="w-5 h-5" />
           Add New Store
         </Link>
-      </div>
+      }
+    >
+      <div className="p-6">
+        <motion.div
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6"
+        >
+          {loading
+            ? [...Array(3)].map((_, i) => (
+                <div
+                  key={i}
+                  className="animate-pulse bg-white/50 rounded-xl h-48 backdrop-blur-lg"
+                />
+              ))
+            : stores.map((store) => (
+                <motion.div
+                  key={store.id}
+                  variants={item}
+                  className="dashboard-card group"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-800">
+                        {store.name}
+                      </h3>
+                      {store.description && (
+                        <p className="text-sm text-gray-500 mt-1">
+                          {store.description}
+                        </p>
+                      )}
+                    </div>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        store.is_active
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {store.is_active ? "Active" : "Inactive"}
+                    </span>
+                  </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Store Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Address
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Phone
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Hours
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {stores.map((store) => (
-              <tr key={store.id}>
-                <td className="px-6 py-4">
-                  <div>
-                    <p className="font-medium">{store.name}</p>
-                    {store.description && (
-                      <p className="text-sm text-gray-500">
-                        {store.description}
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <p>{store.address}</p>
+                    <p>{store.phone}</p>
+                    {store.opening_time && store.closing_time && (
+                      <p>
+                        Hours: {store.opening_time} - {store.closing_time}
                       </p>
                     )}
                   </div>
-                </td>
-                <td className="px-6 py-4">{store.address}</td>
-                <td className="px-6 py-4">{store.phone}</td>
-                <td className="px-6 py-4">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs ${
-                      store.is_active
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {store.is_active ? "Active" : "Inactive"}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  {store.opening_time && store.closing_time
-                    ? `${store.opening_time} - ${store.closing_time}`
-                    : "Not set"}
-                </td>
-                <td className="px-6 py-4">
-                  <div className="space-x-2">
+
+                  <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end gap-2">
                     <Link
                       href={`/dashboard/stores/${store.id}/edit`}
-                      className="text-blue-600 hover:text-blue-900"
+                      className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
                     >
+                      <PencilIcon className="w-4 h-4" />
                       Edit
                     </Link>
                     <button
                       onClick={() =>
                         toggleStoreStatus(store.id, store.is_active)
                       }
-                      className={`${
+                      className={`flex items-center gap-1 ${
                         store.is_active
-                          ? "text-red-600 hover:text-red-900"
-                          : "text-green-600 hover:text-green-900"
+                          ? "text-red-600 hover:text-red-800"
+                          : "text-green-600 hover:text-green-800"
                       }`}
                     >
-                      {store.is_active ? "Deactivate" : "Activate"}
+                      {store.is_active ? (
+                        <>
+                          <XCircleIcon className="w-4 h-4" />
+                          Deactivate
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircleIcon className="w-4 h-4" />
+                          Activate
+                        </>
+                      )}
                     </button>
                   </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </motion.div>
+              ))}
+        </motion.div>
 
-        {stores.length === 0 && (
-          <div className="text-center py-8 text-gray-500">No stores found</div>
+        {stores.length === 0 && !loading && (
+          <div className="text-center py-12">
+            <BuildingStorefrontIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">
+              No stores
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Get started by creating a new store.
+            </p>
+          </div>
         )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

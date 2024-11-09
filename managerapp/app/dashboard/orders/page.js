@@ -2,6 +2,14 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import Link from "next/link";
+import { motion } from "framer-motion";
+import DashboardLayout from "../components/DashboardLayout";
+import {
+  ClockIcon,
+  TruckIcon,
+  CheckCircleIcon,
+  BanknotesIcon,
+} from "@heroicons/react/24/outline";
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
@@ -101,71 +109,109 @@ export default function OrdersPage() {
     return colors[status] || "bg-gray-100 text-gray-800";
   };
 
+  const statsCards = [
+    {
+      title: "Pending Orders",
+      value: stats.pendingOrders,
+      icon: ClockIcon,
+      color: "yellow",
+    },
+    {
+      title: "Active Deliveries",
+      value: stats.activeDeliveries,
+      icon: TruckIcon,
+      color: "blue",
+    },
+    {
+      title: "Today's Completed",
+      value: stats.completedToday,
+      icon: CheckCircleIcon,
+      color: "green",
+    },
+    {
+      title: "Today's Revenue",
+      value: `$${stats.todayRevenue.toFixed(2)}`,
+      icon: BanknotesIcon,
+      color: "purple",
+    },
+  ];
+
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Orders</h1>
-        <a
-          href="/dashboard/orders/new"
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
+    <DashboardLayout
+      title="Orders"
+      actions={
+        <Link href="/dashboard/orders/new" className="dashboard-button-primary">
           Create New Order
-        </a>
-      </div>
+        </Link>
+      }
+    >
+      <div className="p-6">
+        {/* Stats Grid */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
+        >
+          {statsCards.map((card, index) => (
+            <motion.div
+              key={card.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="dashboard-card"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">
+                    {card.title}
+                  </p>
+                  <p className="text-2xl font-bold mt-2">{card.value}</p>
+                </div>
+                <div
+                  className={`p-3 rounded-lg bg-${card.color}-50 group-hover:bg-${card.color}-100`}
+                >
+                  <card.icon
+                    className={`w-6 h-6 text-${card.color}-600`}
+                    aria-hidden="true"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
 
-      {/* Order Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-sm font-medium text-gray-500">Pending Orders</h3>
-          <p className="text-2xl font-bold">{stats.pendingOrders}</p>
+        {/* Status Tabs */}
+        <div className="flex mb-6 bg-gray-100/50 rounded-lg p-1 backdrop-blur-sm">
+          {[
+            "pending",
+            "confirmed",
+            "preparing",
+            "picked_up",
+            "delivered",
+            "cancelled",
+          ].map((status) => (
+            <button
+              key={status}
+              onClick={() => setActiveTab(status)}
+              className={`flex-1 py-2 px-4 rounded-lg capitalize transition-all duration-200 ${
+                activeTab === status
+                  ? "bg-white shadow-md font-medium text-gray-800"
+                  : "text-gray-600 hover:bg-white/50"
+              }`}
+            >
+              {status}
+            </button>
+          ))}
         </div>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-sm font-medium text-gray-500">
-            Active Deliveries
-          </h3>
-          <p className="text-2xl font-bold">{stats.activeDeliveries}</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-sm font-medium text-gray-500">
-            Today's Completed
-          </h3>
-          <p className="text-2xl font-bold">{stats.completedToday}</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-sm font-medium text-gray-500">Today's Revenue</h3>
-          <p className="text-2xl font-bold">${stats.todayRevenue.toFixed(2)}</p>
-        </div>
-      </div>
 
-      {/* Status Tabs */}
-      <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
-        {[
-          "pending",
-          "confirmed",
-          "preparing",
-          "picked_up",
-          "delivered",
-          "cancelled",
-        ].map((status) => (
-          <button
-            key={status}
-            onClick={() => setActiveTab(status)}
-            className={`flex-1 py-2 px-4 rounded-lg capitalize ${
-              activeTab === status
-                ? "bg-white shadow font-medium"
-                : "text-gray-600"
-            }`}
-          >
-            {status}
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
-        <p>Loading orders...</p>
-      ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full">
+        {/* Orders Table */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white/80 rounded-xl backdrop-blur-lg shadow-lg overflow-hidden"
+        >
+          <table className="dashboard-table">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -260,8 +306,8 @@ export default function OrdersPage() {
               No {activeTab} orders found
             </div>
           )}
-        </div>
-      )}
-    </div>
+        </motion.div>
+      </div>
+    </DashboardLayout>
   );
 }

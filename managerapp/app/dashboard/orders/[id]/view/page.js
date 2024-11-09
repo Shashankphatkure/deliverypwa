@@ -3,7 +3,19 @@ import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { use } from "react";
+import DashboardLayout from "../../../components/DashboardLayout";
+import {
+  UserIcon,
+  BuildingStorefrontIcon,
+  TruckIcon,
+  ClockIcon,
+  CurrencyDollarIcon,
+  DocumentTextIcon,
+  MapPinIcon,
+  PhoneIcon,
+} from "@heroicons/react/24/outline";
 
 export default function ViewOrderPage({ params }) {
   const router = useRouter();
@@ -63,18 +75,174 @@ export default function ViewOrderPage({ params }) {
     return colors[status] || "bg-gray-100 text-gray-800";
   };
 
-  if (loading) return <div className="p-6">Loading...</div>;
-  if (!order) return <div className="p-6">Order not found</div>;
+  if (loading) {
+    return (
+      <DashboardLayout title="Order Details">
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className="animate-pulse bg-white/50 rounded-xl h-48 backdrop-blur-lg"
+              />
+            ))}
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!order) {
+    return (
+      <DashboardLayout title="Order Details">
+        <div className="p-6">
+          <div className="text-center py-12">
+            <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">
+              Order not found
+            </h3>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const orderSections = [
+    {
+      title: "Order Status",
+      icon: ClockIcon,
+      content: (
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600">Status:</span>
+            <span
+              className={`px-2 py-1 rounded-full text-sm ${getStatusColor(
+                order.status
+              )}`}
+            >
+              {order.status}
+            </span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600">Payment Status:</span>
+            <span
+              className={`px-2 py-1 rounded-full text-sm ${
+                order.payment_status === "completed"
+                  ? "bg-green-100 text-green-800"
+                  : "bg-yellow-100 text-yellow-800"
+              }`}
+            >
+              {order.payment_status}
+            </span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600">Created At:</span>
+            <span>{new Date(order.created_at).toLocaleString()}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Customer Details",
+      icon: UserIcon,
+      content: (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <UserIcon className="w-5 h-5 text-gray-400" />
+            <span>{order.users?.full_name}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <PhoneIcon className="w-5 h-5 text-gray-400" />
+            <span>{order.users?.phone}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <MapPinIcon className="w-5 h-5 text-gray-400" />
+            <span>{order.delivery_address}</span>
+          </div>
+          {order.delivery_notes && (
+            <div className="flex items-center gap-2">
+              <DocumentTextIcon className="w-5 h-5 text-gray-400" />
+              <span>{order.delivery_notes}</span>
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: "Store Details",
+      icon: BuildingStorefrontIcon,
+      content: (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <BuildingStorefrontIcon className="w-5 h-5 text-gray-400" />
+            <span>{order.stores?.name}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <MapPinIcon className="w-5 h-5 text-gray-400" />
+            <span>{order.stores?.address}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <PhoneIcon className="w-5 h-5 text-gray-400" />
+            <span>{order.stores?.phone}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Delivery Details",
+      icon: TruckIcon,
+      content: order.delivery_assignments?.[0] ? (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <UserIcon className="w-5 h-5 text-gray-400" />
+            <span>
+              {order.delivery_assignments[0].delivery_personnel?.full_name}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <PhoneIcon className="w-5 h-5 text-gray-400" />
+            <span>
+              {order.delivery_assignments[0].delivery_personnel?.phone}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <ClockIcon className="w-5 h-5 text-gray-400" />
+            <span>
+              Pickup:{" "}
+              {order.delivery_assignments[0].pickup_time
+                ? new Date(
+                    order.delivery_assignments[0].pickup_time
+                  ).toLocaleString()
+                : "Not picked up yet"}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <ClockIcon className="w-5 h-5 text-gray-400" />
+            <span>
+              Delivery:{" "}
+              {order.delivery_assignments[0].delivery_time
+                ? new Date(
+                    order.delivery_assignments[0].delivery_time
+                  ).toLocaleString()
+                : "Not delivered yet"}
+            </span>
+          </div>
+        </div>
+      ) : (
+        <p className="text-gray-500">No driver assigned yet</p>
+      ),
+    },
+  ];
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Order #{id.slice(0, 8)}</h1>
+    <DashboardLayout
+      title={`Order #${id.slice(0, 8)}`}
+      actions={
         <div className="space-x-2">
           {order.status === "pending" && !order.delivery_assignments?.[0] && (
             <Link
               href={`/dashboard/orders/${id}/assign`}
-              className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+              className="dashboard-button-primary"
             >
               Assign Driver
             </Link>
@@ -82,134 +250,49 @@ export default function ViewOrderPage({ params }) {
           {order.status === "pending" && order.delivery_assignments?.[0] && (
             <Link
               href={`/dashboard/orders/${id}/transfer`}
-              className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
+              className="dashboard-button-secondary"
             >
               Transfer Order
             </Link>
           )}
           <button
             onClick={() => router.push("/dashboard/orders")}
-            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+            className="dashboard-button-secondary"
           >
             Back to Orders
           </button>
         </div>
-      </div>
+      }
+    >
+      <div className="p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {orderSections.map((section, index) => (
+            <motion.div
+              key={section.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="dashboard-card"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <section.icon className="w-6 h-6 text-gray-400" />
+                <h2 className="text-lg font-semibold">{section.title}</h2>
+              </div>
+              {section.content}
+            </motion.div>
+          ))}
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Order Status */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4">Order Status</h2>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Status:</span>
-              <span
-                className={`px-2 py-1 rounded-full text-sm ${getStatusColor(
-                  order.status
-                )}`}
-              >
-                {order.status}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Payment Status:</span>
-              <span
-                className={`px-2 py-1 rounded-full text-sm ${
-                  order.payment_status === "completed"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-yellow-100 text-yellow-800"
-                }`}
-              >
-                {order.payment_status}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Created At:</span>
-              <span>{new Date(order.created_at).toLocaleString()}</span>
-            </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="dashboard-card"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <DocumentTextIcon className="w-6 h-6 text-gray-400" />
+            <h2 className="text-lg font-semibold">Order Items</h2>
           </div>
-        </div>
-
-        {/* Customer Details */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4">Customer Details</h2>
-          <div className="space-y-2">
-            <p>
-              <span className="text-gray-600">Name:</span>{" "}
-              {order.users?.full_name}
-            </p>
-            <p>
-              <span className="text-gray-600">Phone:</span> {order.users?.phone}
-            </p>
-            <p>
-              <span className="text-gray-600">Delivery Address:</span>{" "}
-              {order.delivery_address}
-            </p>
-            {order.delivery_notes && (
-              <p>
-                <span className="text-gray-600">Notes:</span>{" "}
-                {order.delivery_notes}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Store Details */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4">Store Details</h2>
-          <div className="space-y-2">
-            <p>
-              <span className="text-gray-600">Name:</span> {order.stores?.name}
-            </p>
-            <p>
-              <span className="text-gray-600">Address:</span>{" "}
-              {order.stores?.address}
-            </p>
-            <p>
-              <span className="text-gray-600">Phone:</span>{" "}
-              {order.stores?.phone}
-            </p>
-          </div>
-        </div>
-
-        {/* Driver Details */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4">Delivery Details</h2>
-          {order.delivery_assignments?.[0] ? (
-            <div className="space-y-2">
-              <p>
-                <span className="text-gray-600">Driver:</span>
-                {order.delivery_assignments[0].delivery_personnel?.full_name}
-              </p>
-              <p>
-                <span className="text-gray-600">Driver Phone:</span>
-                {order.delivery_assignments[0].delivery_personnel?.phone}
-              </p>
-              <p>
-                <span className="text-gray-600">Pickup Time:</span>
-                {order.delivery_assignments[0].pickup_time
-                  ? new Date(
-                      order.delivery_assignments[0].pickup_time
-                    ).toLocaleString()
-                  : "Not picked up yet"}
-              </p>
-              <p>
-                <span className="text-gray-600">Delivery Time:</span>
-                {order.delivery_assignments[0].delivery_time
-                  ? new Date(
-                      order.delivery_assignments[0].delivery_time
-                    ).toLocaleString()
-                  : "Not delivered yet"}
-              </p>
-            </div>
-          ) : (
-            <p className="text-gray-500">No driver assigned yet</p>
-          )}
-        </div>
-
-        {/* Order Items */}
-        <div className="bg-white p-4 rounded-lg shadow md:col-span-2">
-          <h2 className="text-lg font-semibold mb-4">Order Items</h2>
           <table className="min-w-full">
             <thead>
               <tr className="border-b">
@@ -238,8 +321,8 @@ export default function ViewOrderPage({ params }) {
               </tr>
             </tbody>
           </table>
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

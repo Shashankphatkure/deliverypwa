@@ -1,6 +1,15 @@
 "use client";
+import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import {
+  UserGroupIcon,
+  TruckIcon,
+  ClockIcon,
+  BanknotesIcon,
+  ExclamationTriangleIcon,
+  CurrencyDollarIcon,
+} from "@heroicons/react/24/outline";
 
 export default function DashboardStats() {
   const [stats, setStats] = useState({
@@ -81,23 +90,90 @@ export default function DashboardStats() {
     }
   }
 
-  if (loading) return <div>Loading statistics...</div>;
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[...Array(6)].map((_, i) => (
+          <div
+            key={i}
+            className="animate-pulse bg-white/50 rounded-xl h-32 backdrop-blur-lg"
+          />
+        ))}
+      </div>
+    );
+  }
+
+  const statCards = [
+    {
+      title: "ACTIVE DRIVERS",
+      value: stats.activeDrivers,
+      icon: TruckIcon,
+      color: "blue",
+    },
+    {
+      title: "PENDING ORDERS",
+      value: stats.pendingOrders,
+      icon: ClockIcon,
+      color: "yellow",
+    },
+    {
+      title: "TOTAL CUSTOMERS",
+      value: stats.totalCustomers,
+      icon: UserGroupIcon,
+      color: "green",
+    },
+    {
+      title: "PENDING PAYMENTS",
+      value: stats.pendingPayments,
+      icon: BanknotesIcon,
+      color: "purple",
+    },
+    {
+      title: "TOTAL REVENUE",
+      value: `$${stats.totalRevenue.toFixed(2)}`,
+      icon: CurrencyDollarIcon,
+      color: "emerald",
+    },
+    {
+      title: "PENDING PENALTIES",
+      value: stats.pendingPenalties,
+      icon: ExclamationTriangleIcon,
+      color: "red",
+    },
+  ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-      {Object.entries(stats).map(([key, value]) => (
-        <div key={key} className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-sm font-medium text-gray-500 mb-2">
-            {key
-              .replace(/([A-Z])/g, " $1")
-              .trim()
-              .toUpperCase()}
-          </h3>
-          <p className="text-3xl font-bold">
-            {key === "totalRevenue" ? `$${value.toFixed(2)}` : value}
-          </p>
-        </div>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="grid grid-cols-1 md:grid-cols-3 gap-6"
+    >
+      {statCards.map((card, index) => (
+        <motion.div
+          key={card.title}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.1 }}
+          className="dashboard-card group hover:shadow-xl transition-all duration-300"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">{card.title}</p>
+              <p className="text-3xl font-bold mt-2 text-gray-800">
+                {card.value}
+              </p>
+            </div>
+            <div
+              className={`p-3 rounded-lg bg-${card.color}-50 group-hover:bg-${card.color}-100 transition-colors`}
+            >
+              <card.icon
+                className={`w-6 h-6 text-${card.color}-600`}
+                aria-hidden="true"
+              />
+            </div>
+          </div>
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 }
