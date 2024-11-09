@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { use } from "react";
 import DashboardLayout from "../../../components/DashboardLayout";
 import {
@@ -15,6 +16,8 @@ import {
   BuildingStorefrontIcon,
   ClockIcon,
   ArrowTopRightOnSquareIcon,
+  UserIcon,
+  CurrencyDollarIcon,
 } from "@heroicons/react/24/outline";
 
 export default function DriverAssignmentsPage({ params }) {
@@ -22,14 +25,14 @@ export default function DriverAssignmentsPage({ params }) {
   const { id } = use(params);
   const supabase = createClientComponentClient();
   const [driver, setDriver] = useState(null);
-  const [assignments, setAssignments] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDriverAndAssignments();
+    fetchDriverAndOrders();
   }, []);
 
-  async function fetchDriverAndAssignments() {
+  async function fetchDriverAndOrders() {
     try {
       // Fetch driver details
       const { data: driverData, error: driverError } = await supabase
@@ -41,29 +44,17 @@ export default function DriverAssignmentsPage({ params }) {
       if (driverError) throw driverError;
       setDriver(driverData);
 
-      // Fetch all assignments for this driver
-      const { data: assignmentsData, error: assignmentsError } = await supabase
-        .from("delivery_assignments")
-        .select(
-          `
-          *,
-          orders (
-            id,
-            status,
-            total_amount,
-            delivery_address,
-            created_at,
-            stores (name)
-          )
-        `
-        )
-        .eq("delivery_personnel_id", id)
+      // Fetch all orders for this driver
+      const { data: ordersData, error: ordersError } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("driverid", id)
         .order("created_at", { ascending: false });
 
-      if (assignmentsError) throw assignmentsError;
-      setAssignments(assignmentsData || []);
+      if (ordersError) throw ordersError;
+      setOrders(ordersData || []);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching data:", error.message);
       alert("Error fetching driver assignments");
     } finally {
       setLoading(false);
@@ -112,61 +103,77 @@ export default function DriverAssignmentsPage({ params }) {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {assignments.map((assignment) => (
+            {orders.map((order) => (
               <div
-                key={assignment.id}
-                className="dashboard-card hover:shadow-lg transition-shadow"
+                key={order.id}
+                className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-2">
                     <TruckIcon className="w-5 h-5 text-[#605e5c]" />
-                    <span className="font-medium">
-                      Order #{assignment.orders.id.slice(0, 8)}
-                    </span>
+                    <span className="font-medium">Order #{order.id}</span>
                   </div>
                   <span
                     className={`px-2 py-1 rounded-full text-xs ${getStatusColor(
-                      assignment.orders.status
+                      order.status
                     )}`}
                   >
-                    {assignment.orders.status}
+                    {order.status}
                   </span>
                 </div>
 
                 <div className="space-y-3 text-sm">
                   <div className="flex items-start gap-2">
-                    <BuildingStorefrontIcon className="w-5 h-5 text-[#605e5c] shrink-0" />
-                    <span>{assignment.orders.stores.name}</span>
+                    <MapPinIcon className="w-5 h-5 text-[#605e5c] shrink-0" />
+                    <div>
+                      <p className="text-xs text-gray-500">Pickup</p>
+                      <p>{order.start}</p>
+                    </div>
                   </div>
                   <div className="flex items-start gap-2">
                     <MapPinIcon className="w-5 h-5 text-[#605e5c] shrink-0" />
-                    <span className="text-[#605e5c]">
-                      {assignment.orders.delivery_address}
-                    </span>
+                    <div>
+                      <p className="text-xs text-gray-500">Delivery</p>
+                      <p>{order.destination}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <UserIcon className="w-5 h-5 text-[#605e5c]" />
+                    <span>{order.customername}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <ClockIcon className="w-5 h-5 text-[#605e5c]" />
-                    <span className="text-[#605e5c]">
-                      {new Date(assignment.created_at).toLocaleString()}
-                    </span>
+                    <span>{new Date(order.created_at).toLocaleString()}</span>
                   </div>
+                  {order.total_amount && (
+                    <div className="flex items-center gap-2">
+                      <DocumentTextIcon className="w-5 h-5 text-[#605e5c]" />
+                      <span>${parseFloat(order.total_amount).toFixed(2)}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-[#edebe9]">
-                  <a
-                    href={`/dashboard/orders/${assignment.orders.id}/view`}
+                  <Link
+                    href={`/dashboard/orders/${order.id}/view`}
                     className="text-[#0078d4] hover:text-[#106ebe] flex items-center gap-1"
                   >
                     View Details
                     <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                  </a>
+                  </Link>
                 </div>
               </div>
             ))}
 
-            {assignments.length === 0 && (
-              <div className="col-span-full text-center py-12 text-[#605e5c]">
-                No assignments found for this driver
+            {orders.length === 0 && (
+              <div className="col-span-full text-center py-12">
+                <TruckIcon className="mx-auto h-12 w-12 text-gray-300" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">
+                  No assignments found
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  This driver hasn't been assigned any orders yet.
+                </p>
               </div>
             )}
           </div>
