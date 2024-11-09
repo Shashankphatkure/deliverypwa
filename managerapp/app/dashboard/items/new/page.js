@@ -12,6 +12,7 @@ import {
   PhotoIcon,
   ArrowLeftIcon,
   PlusIcon,
+  DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 
 export default function NewMenuItemPage() {
