@@ -27,28 +27,6 @@ export default function NewStorePage() {
     image_url: "",
   });
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setSubmitting(true);
-
-    try {
-      const { error } = await supabase.from("stores").insert([
-        {
-          ...store,
-          is_active: true,
-        },
-      ]);
-
-      if (error) throw error;
-      router.push("/dashboard/stores");
-    } catch (error) {
-      console.error("Error creating store:", error);
-      alert("Error creating store. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
   const formFields = [
     {
       label: "Store Name",
@@ -104,9 +82,32 @@ export default function NewStorePage() {
     },
   ];
 
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      const { error } = await supabase.from("stores").insert([
+        {
+          ...store,
+          is_active: true,
+        },
+      ]);
+
+      if (error) throw error;
+      router.push("/dashboard/stores");
+    } catch (error) {
+      console.error("Error creating store:", error);
+      alert("Error creating store. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <DashboardLayout
       title="Add New Store"
+      subtitle="Create a new store location"
       actions={
         <button
           onClick={() => router.push("/dashboard/stores")}
@@ -117,51 +118,62 @@ export default function NewStorePage() {
         </button>
       }
     >
-      <div className="max-w-2xl mx-auto p-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {formFields.map((field) => (
-            <div key={field.label} className="dashboard-card">
-              <label className="block text-sm font-medium text-[#323130] mb-2">
-                {field.label}
-              </label>
-              <div className="relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <field.icon className="h-5 w-5 text-[#605e5c]" />
+      <div className="max-w-3xl mx-auto p-8">
+        <div className="bg-white border border-[#edebe9] rounded-lg shadow-sm p-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {formFields.map((field) => (
+              <div key={field.label} className="space-y-2">
+                <label className="text-sm font-semibold text-[#323130]">
+                  {field.label}
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <field.icon className="h-5 w-5 text-[#605e5c]" />
+                  </div>
+                  {field.type === "textarea" ? (
+                    <textarea
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      className="block w-full rounded-md border border-[#8a8886] pl-10 py-2 text-sm focus:border-[#0078d4] focus:ring-[#0078d4]"
+                      rows={3}
+                      required={field.required}
+                      placeholder={field.placeholder}
+                    />
+                  ) : (
+                    <input
+                      type={field.type}
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      className="block w-full rounded-md border border-[#8a8886] pl-10 py-2 text-sm focus:border-[#0078d4] focus:ring-[#0078d4]"
+                      required={field.required}
+                      placeholder={field.placeholder}
+                    />
+                  )}
                 </div>
-                {field.type === "textarea" ? (
-                  <textarea
-                    value={field.value}
-                    onChange={(e) => field.onChange(e.target.value)}
-                    className="dashboard-input pl-10"
-                    rows={3}
-                    required={field.required}
-                    placeholder={field.placeholder}
-                  />
-                ) : (
-                  <input
-                    type={field.type}
-                    value={field.value}
-                    onChange={(e) => field.onChange(e.target.value)}
-                    className="dashboard-input pl-10"
-                    required={field.required}
-                    placeholder={field.placeholder}
-                  />
-                )}
+              </div>
+            ))}
+
+            <div className="pt-6 border-t border-[#edebe9]">
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => router.push("/dashboard/stores")}
+                  className="px-4 py-2 text-sm font-medium text-[#323130] bg-white border border-[#8a8886] rounded-md hover:bg-[#f3f2f1] focus:outline-none focus:ring-2 focus:ring-[#0078d4]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-4 py-2 text-sm font-medium text-white bg-[#0078d4] border border-transparent rounded-md hover:bg-[#106ebe] focus:outline-none focus:ring-2 focus:ring-[#0078d4] flex items-center gap-2"
+                >
+                  <BuildingStorefrontIcon className="w-5 h-5" />
+                  {submitting ? "Adding..." : "Add Store"}
+                </button>
               </div>
             </div>
-          ))}
-
-          <div className="flex justify-end space-x-4">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="dashboard-button-primary flex items-center gap-2"
-            >
-              <BuildingStorefrontIcon className="w-5 h-5" />
-              {submitting ? "Adding..." : "Add Store"}
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </DashboardLayout>
   );

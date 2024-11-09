@@ -205,6 +205,7 @@ export default function NewMenuItemPage() {
   return (
     <DashboardLayout
       title="Add New Menu Item"
+      subtitle="Create a new item for your store menu"
       actions={
         <button
           onClick={() => router.push("/dashboard/items")}
@@ -215,151 +216,151 @@ export default function NewMenuItemPage() {
         </button>
       }
     >
-      <div className="max-w-2xl mx-auto p-6">
+      <div className="max-w-3xl mx-auto p-8">
         {loading ? (
           <div className="space-y-4">
             {[...Array(6)].map((_, i) => (
               <div
                 key={i}
-                className="animate-pulse bg-[#f3f2f1] rounded h-16"
+                className="animate-pulse bg-[#f3f2f1] rounded-lg h-16"
               />
             ))}
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {formFields.map((field) => (
-              <div key={field.label} className="dashboard-card">
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block text-sm font-medium text-[#323130]">
-                    {field.label}
-                  </label>
-                  {field.addNew && (
-                    <button
-                      type="button"
-                      onClick={field.addNew.action}
-                      className="text-sm text-[#0078d4] hover:text-[#106ebe] flex items-center gap-1"
-                    >
-                      <PlusIcon className="w-4 h-4" />
-                      {field.addNew.label}
-                    </button>
-                  )}
-                </div>
-                <div className="relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <field.icon className="h-5 w-5 text-[#605e5c]" />
+          <div className="bg-white border border-[#edebe9] rounded-lg shadow-sm p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {formFields.map((field) => (
+                <div key={field.label} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm font-semibold text-[#323130]">
+                      {field.label}
+                    </label>
+                    {field.addNew && (
+                      <button
+                        type="button"
+                        onClick={field.addNew.action}
+                        className="text-sm text-[#0078d4] hover:text-[#106ebe] flex items-center gap-1"
+                      >
+                        <PlusIcon className="w-4 h-4" />
+                        {field.addNew.label}
+                      </button>
+                    )}
                   </div>
-                  {field.type === "select" ? (
-                    <select
-                      value={field.value}
-                      onChange={(e) => field.onChange(e.target.value)}
-                      className="dashboard-input pl-10"
-                      required={field.required}
-                    >
-                      <option value="">Select {field.label}</option>
-                      {field.options.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  ) : field.type === "textarea" ? (
-                    <textarea
-                      value={field.value}
-                      onChange={(e) => field.onChange(e.target.value)}
-                      className="dashboard-input pl-10"
-                      rows={3}
-                      required={field.required}
-                      placeholder={field.placeholder}
-                    />
-                  ) : (
-                    <div className="relative">
-                      {field.prefix && (
-                        <div className="absolute inset-y-0 left-10 flex items-center pointer-events-none">
-                          <span className="text-gray-500">{field.prefix}</span>
-                        </div>
-                      )}
-                      <input
-                        type={field.type}
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <field.icon className="h-5 w-5 text-[#605e5c]" />
+                    </div>
+                    {field.type === "select" ? (
+                      <select
                         value={field.value}
                         onChange={(e) => field.onChange(e.target.value)}
-                        className={`dashboard-input ${
-                          field.prefix ? "pl-14" : "pl-10"
-                        }`}
+                        className="dashboard-input pl-10"
+                        required={field.required}
+                      >
+                        <option value="">Select {field.label}</option>
+                        {field.options.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : field.type === "textarea" ? (
+                      <textarea
+                        value={field.value}
+                        onChange={(e) => field.onChange(e.target.value)}
+                        className="dashboard-input pl-10"
+                        rows={3}
                         required={field.required}
                         placeholder={field.placeholder}
-                        step={field.type === "number" ? "0.01" : undefined}
-                        min={field.type === "number" ? "0" : undefined}
                       />
-                    </div>
-                  )}
+                    ) : (
+                      <div className="relative">
+                        {field.prefix && (
+                          <div className="absolute inset-y-0 left-10 flex items-center pointer-events-none">
+                            <span className="text-gray-500">
+                              {field.prefix}
+                            </span>
+                          </div>
+                        )}
+                        <input
+                          type={field.type}
+                          value={field.value}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          className={`dashboard-input ${
+                            field.prefix ? "pl-14" : "pl-10"
+                          }`}
+                          required={field.required}
+                          placeholder={field.placeholder}
+                          step={field.type === "number" ? "0.01" : undefined}
+                          min={field.type === "number" ? "0" : undefined}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              <div className="pt-6 border-t border-[#edebe9]">
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => router.push("/dashboard/items")}
+                    className="px-4 py-2 text-sm font-medium text-[#323130] bg-white border border-[#8a8886] rounded-md hover:bg-[#f3f2f1] focus:outline-none focus:ring-2 focus:ring-[#0078d4]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="px-4 py-2 text-sm font-medium text-white bg-[#0078d4] border border-transparent rounded-md hover:bg-[#106ebe] focus:outline-none focus:ring-2 focus:ring-[#0078d4]"
+                  >
+                    {submitting ? "Adding..." : "Add Item"}
+                  </button>
                 </div>
               </div>
-            ))}
-
-            <div className="dashboard-card">
-              <label className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  checked={item.is_available}
-                  onChange={(e) =>
-                    setItem({ ...item, is_available: e.target.checked })
-                  }
-                  className="form-checkbox h-5 w-5 text-[#0078d4]"
-                />
-                <span className="text-sm font-medium text-[#323130]">
-                  Available for Order
-                </span>
-              </label>
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="dashboard-button-primary flex items-center gap-2"
-              >
-                <ShoppingBagIcon className="w-5 h-5" />
-                {submitting ? "Adding..." : "Add Item"}
-              </button>
-            </div>
-          </form>
+            </form>
+          </div>
         )}
 
         {/* Category Modal */}
         {showCategoryModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-xl w-96 shadow-xl">
-              <h2 className="text-xl font-bold mb-4">Add New Category</h2>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">
-                  Category Name
-                </label>
-                <input
-                  type="text"
-                  value={newCategory.name}
-                  onChange={(e) =>
-                    setNewCategory({ ...newCategory, name: e.target.value })
-                  }
-                  className="dashboard-input"
-                  required
-                />
-              </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={handleCreateCategory}
-                  className="dashboard-button-primary flex items-center gap-2"
-                >
-                  <PlusIcon className="w-5 h-5" />
-                  Add Category
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowCategoryModal(false)}
-                  className="dashboard-button-secondary"
-                >
-                  Cancel
-                </button>
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+              <div className="p-6">
+                <h2 className="text-xl font-semibold text-[#323130] mb-4">
+                  Add New Category
+                </h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-[#323130]">
+                      Category Name
+                    </label>
+                    <input
+                      type="text"
+                      value={newCategory.name}
+                      onChange={(e) =>
+                        setNewCategory({ ...newCategory, name: e.target.value })
+                      }
+                      className="mt-1 block w-full rounded-md border border-[#8a8886] px-3 py-2 text-sm focus:border-[#0078d4] focus:ring-[#0078d4]"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowCategoryModal(false)}
+                      className="px-4 py-2 text-sm font-medium text-[#323130] bg-white border border-[#8a8886] rounded-md hover:bg-[#f3f2f1]"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCreateCategory}
+                      className="px-4 py-2 text-sm font-medium text-white bg-[#0078d4] border border-transparent rounded-md hover:bg-[#106ebe]"
+                    >
+                      Add Category
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
