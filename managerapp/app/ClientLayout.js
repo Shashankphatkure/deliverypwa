@@ -60,30 +60,6 @@ export default function ClientLayout({ children }) {
         className="bg-white border-r border-gray-200 relative"
       >
         <div className="p-6">
-          <div className="flex items-center justify-between mb-8">
-            <motion.div
-              variants={textVariants}
-              className="flex items-center gap-2"
-            >
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">M</span>
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-                Manager App
-              </span>
-            </motion.div>
-            <button
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              {isSidebarOpen ? (
-                <ChevronRightIcon className="w-5 h-5 text-gray-500" />
-              ) : (
-                <Bars3Icon className="w-5 h-5 text-gray-500" />
-              )}
-            </button>
-          </div>
-
           <nav className="space-y-1">
             {menuItems.map((item) => {
               const isActive = pathname === item.path;
