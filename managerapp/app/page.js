@@ -1,7 +1,13 @@
+"use client";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
 export default function Home() {
-  return (
-    <div>
-      <h1>Manager App</h1>
-    </div>
-  );
+  const router = useRouter();
+
+  useEffect(() => {
+    router.push("/dashboard");
+  }, [router]);
+
+  return null; // or return a loading indicator if you prefer
 }
