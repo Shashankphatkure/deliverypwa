@@ -2,7 +2,18 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { use } from "react";
+import DashboardLayout from "../../../components/DashboardLayout";
+import {
+  ArrowPathIcon,
+  UserGroupIcon,
+  DocumentTextIcon,
+  ArrowLeftIcon,
+  TruckIcon,
+  MapPinIcon,
+  PhoneIcon,
+} from "@heroicons/react/24/outline";
 
 export default function TransferOrderPage({ params }) {
   const router = useRouter();
@@ -14,28 +25,56 @@ export default function TransferOrderPage({ params }) {
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(true);
   const [transferring, setTransferring] = useState(false);
+  const [orderDetails, setOrderDetails] = useState(null);
 
   useEffect(() => {
-    fetchOrderAndDrivers();
+    Promise.all([fetchOrderAndDrivers(), fetchOrderDetails()]);
   }, []);
+
+  async function fetchOrderDetails() {
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .select(
+          `
+          *,
+          stores (name, address),
+          users (full_name, phone),
+          delivery_assignments (
+            delivery_personnel (full_name, phone)
+          )
+        `
+        )
+        .eq("id", id)
+        .single();
+
+      if (error) throw error;
+      setOrderDetails(data);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  }
 
   async function fetchOrderAndDrivers() {
     try {
       // Fetch current assignment
       const { data: assignment } = await supabase
         .from("delivery_assignments")
-        .select("delivery_personnel_id")
+        .select("delivery_personnel_id, delivery_personnel (full_name)")
         .eq("order_id", id)
         .single();
 
       if (assignment) {
-        setCurrentDriver(assignment.delivery_personnel_id);
+        setCurrentDriver({
+          id: assignment.delivery_personnel_id,
+          name: assignment.delivery_personnel.full_name,
+        });
       }
 
       // Fetch available drivers
       const { data: availableDrivers } = await supabase
         .from("delivery_personnel")
-        .select("id, full_name")
+        .select("id, full_name, phone")
         .eq("is_active", true);
 
       setDrivers(availableDrivers || []);
@@ -57,10 +96,9 @@ export default function TransferOrderPage({ params }) {
         .insert([
           {
             order_id: id,
-            from_driver_id: currentDriver,
+            from_driver_id: currentDriver.id,
             to_driver_id: selectedDriver,
             reason,
-            transferred_by: "current_manager_id", // Replace with actual manager ID
           },
         ]);
 
@@ -79,7 +117,7 @@ export default function TransferOrderPage({ params }) {
         supabase.from("notifications").insert([
           {
             recipient_type: "driver",
-            recipient_id: currentDriver,
+            recipient_id: currentDriver.id,
             title: "Order Transferred",
             message: `Order #${id} has been reassigned to another driver`,
             type: "order",
@@ -103,62 +141,150 @@ export default function TransferOrderPage({ params }) {
     }
   }
 
-  if (loading) return <div className="p-6">Loading...</div>;
-
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Transfer Order #{id}</h1>
+    <DashboardLayout
+      title={`Transfer Order #${id.slice(0, 8)}`}
+      actions={
+        <button
+          onClick={() => router.push("/dashboard/orders")}
+          className="dashboard-button-secondary flex items-center gap-2"
+        >
+          <ArrowLeftIcon className="w-5 h-5" />
+          Back to Orders
+        </button>
+      }
+    >
+      <div className="p-6">
+        <div className="max-w-3xl mx-auto">
+          {/* Order Details Card */}
+          {orderDetails && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="dashboard-card mb-6"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <TruckIcon className="w-6 h-6 text-gray-400" />
+                <h2 className="text-lg font-semibold">Order Details</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-500">Customer</p>
+                  <div className="flex items-center gap-2">
+                    <UserGroupIcon className="w-5 h-5 text-gray-400" />
+                    <span className="font-medium">
+                      {orderDetails.users?.full_name}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <PhoneIcon className="w-5 h-5 text-gray-400" />
+                    <span>{orderDetails.users?.phone}</span>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-500">Store</p>
+                  <div className="flex items-center gap-2">
+                    <TruckIcon className="w-5 h-5 text-gray-400" />
+                    <span className="font-medium">
+                      {orderDetails.stores?.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPinIcon className="w-5 h-5 text-gray-400" />
+                    <span>{orderDetails.stores?.address}</span>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-500">Current Driver</p>
+                  <div className="flex items-center gap-2">
+                    <UserGroupIcon className="w-5 h-5 text-gray-400" />
+                    <span className="font-medium">
+                      {orderDetails.delivery_assignments?.[0]
+                        ?.delivery_personnel?.full_name || "No driver assigned"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
-      <form onSubmit={handleTransfer} className="max-w-lg">
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">New Driver</label>
-          <select
-            value={selectedDriver}
-            onChange={(e) => setSelectedDriver(e.target.value)}
-            className="w-full p-2 border rounded"
-            required
+          {/* Transfer Form */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="dashboard-card"
           >
-            <option value="">Select Driver</option>
-            {drivers
-              .filter((driver) => driver.id !== currentDriver)
-              .map((driver) => (
-                <option key={driver.id} value={driver.id}>
-                  {driver.full_name}
-                </option>
-              ))}
-          </select>
-        </div>
+            <div className="flex items-center gap-2 mb-6">
+              <ArrowPathIcon className="w-6 h-6 text-gray-400" />
+              <h2 className="text-lg font-semibold">Transfer Order</h2>
+            </div>
 
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">
-            Transfer Reason
-          </label>
-          <textarea
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            className="w-full p-2 border rounded"
-            required
-            rows={3}
-          />
-        </div>
+            {loading ? (
+              <div className="animate-pulse space-y-4">
+                <div className="h-10 bg-gray-200 rounded"></div>
+                <div className="h-32 bg-gray-200 rounded"></div>
+              </div>
+            ) : (
+              <form onSubmit={handleTransfer} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    New Driver
+                  </label>
+                  <select
+                    value={selectedDriver}
+                    onChange={(e) => setSelectedDriver(e.target.value)}
+                    className="dashboard-input"
+                    required
+                  >
+                    <option value="">Select Driver</option>
+                    {drivers
+                      .filter((driver) => driver.id !== currentDriver?.id)
+                      .map((driver) => (
+                        <option key={driver.id} value={driver.id}>
+                          {driver.full_name} - {driver.phone}
+                        </option>
+                      ))}
+                  </select>
+                </div>
 
-        <div className="flex gap-4">
-          <button
-            type="submit"
-            disabled={transferring}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-300"
-          >
-            {transferring ? "Transferring..." : "Transfer Order"}
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push("/dashboard/orders")}
-            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-          >
-            Cancel
-          </button>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Transfer Reason
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <DocumentTextIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </div>
+                    <textarea
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                      className="dashboard-input pl-10"
+                      rows={4}
+                      required
+                      placeholder="Enter reason for transfer..."
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={transferring}
+                    className="dashboard-button-primary flex items-center gap-2"
+                  >
+                    <ArrowPathIcon className="w-5 h-5" />
+                    {transferring ? "Transferring..." : "Transfer Order"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </motion.div>
         </div>
-      </form>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

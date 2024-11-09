@@ -2,6 +2,16 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import DashboardLayout from "../../components/DashboardLayout";
+import {
+  BanknotesIcon,
+  UserGroupIcon,
+  DocumentTextIcon,
+  ArrowLeftIcon,
+  CalculatorIcon,
+  CalendarIcon,
+} from "@heroicons/react/24/outline";
 
 export default function NewPaymentPage() {
   const router = useRouter();
