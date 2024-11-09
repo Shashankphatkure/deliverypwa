@@ -9,39 +9,79 @@ import {
   CurrencyDollarIcon,
   DocumentTextIcon,
   ArrowLeftIcon,
+  ShoppingBagIcon,
+  ListBulletIcon,
 } from "@heroicons/react/24/outline";
 
 export default function NewPenaltyPage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
   const [drivers, setDrivers] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [predefinedReasons, setPredefinedReasons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [penalty, setPenalty] = useState({
     driver_id: "",
+    order_id: "",
     amount: "",
+    reason_type: "predefined",
+    predefined_reason_id: "",
     reason: "",
+    evidence_url: "",
+    resolution_notes: "",
   });
 
   useEffect(() => {
-    fetchDrivers();
+    fetchInitialData();
   }, []);
 
-  async function fetchDrivers() {
+  async function fetchInitialData() {
     try {
-      const { data, error } = await supabase
+      // Fetch drivers
+      const { data: driversData } = await supabase
         .from("delivery_personnel")
         .select("id, full_name")
         .eq("is_active", true);
 
-      if (error) throw error;
-      setDrivers(data || []);
+      // Fetch predefined reasons
+      const { data: reasonsData } = await supabase
+        .from("penalty_reasons")
+        .select("*")
+        .eq("is_active", true);
+
+      // Fetch recent orders
+      const { data: ordersData } = await supabase
+        .from("orders")
+        .select("id, created_at, status")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      setDrivers(driversData || []);
+      setPredefinedReasons(reasonsData || []);
+      setOrders(ordersData || []);
     } catch (error) {
-      console.error("Error fetching drivers:", error);
+      console.error("Error fetching initial data:", error);
     } finally {
       setLoading(false);
     }
   }
+
+  // Handle predefined reason selection
+  useEffect(() => {
+    if (penalty.predefined_reason_id && penalty.reason_type === "predefined") {
+      const selectedReason = predefinedReasons.find(
+        (r) => r.id === penalty.predefined_reason_id
+      );
+      if (selectedReason) {
+        setPenalty((prev) => ({
+          ...prev,
+          amount: selectedReason.default_amount,
+          reason: selectedReason.reason,
+        }));
+      }
+    }
+  }, [penalty.predefined_reason_id, penalty.reason_type]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -51,27 +91,32 @@ export default function NewPenaltyPage() {
       const { error: penaltyError } = await supabase.from("penalties").insert([
         {
           driver_id: penalty.driver_id,
+          order_id: penalty.order_id || null,
           amount: penalty.amount,
+          reason_type: penalty.reason_type,
+          predefined_reason_id:
+            penalty.reason_type === "predefined"
+              ? penalty.predefined_reason_id
+              : null,
           reason: penalty.reason,
+          evidence_url: penalty.evidence_url,
+          resolution_notes: penalty.resolution_notes,
           status: "pending",
         },
       ]);
 
       if (penaltyError) throw penaltyError;
 
-      const { error: notificationError } = await supabase
-        .from("notifications")
-        .insert([
-          {
-            recipient_type: "driver",
-            recipient_id: penalty.driver_id,
-            title: "New Penalty Added",
-            message: `A penalty of $${penalty.amount} has been added to your account. Reason: ${penalty.reason}`,
-            type: "penalty",
-          },
-        ]);
-
-      if (notificationError) throw notificationError;
+      // Send notification to driver
+      await supabase.from("notifications").insert([
+        {
+          recipient_type: "driver",
+          recipient_id: penalty.driver_id,
+          title: "New Penalty Added",
+          message: `A penalty of $${penalty.amount} has been added to your account. Reason: ${penalty.reason}`,
+          type: "penalty",
+        },
+      ]);
 
       router.push("/dashboard/penalties");
     } catch (error) {
@@ -96,6 +141,58 @@ export default function NewPenaltyPage() {
       required: true,
     },
     {
+      label: "Related Order",
+      type: "select",
+      value: penalty.order_id,
+      onChange: (value) => setPenalty({ ...penalty, order_id: value }),
+      icon: ShoppingBagIcon,
+      options: orders.map((order) => ({
+        value: order.id,
+        label: `Order #${order.id} - ${new Date(
+          order.created_at
+        ).toLocaleDateString()}`,
+      })),
+    },
+    {
+      label: "Reason Type",
+      type: "select",
+      value: penalty.reason_type,
+      onChange: (value) =>
+        setPenalty({ ...penalty, reason_type: value, reason: "" }),
+      icon: ListBulletIcon,
+      options: [
+        { value: "predefined", label: "Predefined Reason" },
+        { value: "custom", label: "Custom Reason" },
+      ],
+      required: true,
+    },
+    ...(penalty.reason_type === "predefined"
+      ? [
+          {
+            label: "Select Reason",
+            type: "select",
+            value: penalty.predefined_reason_id,
+            onChange: (value) =>
+              setPenalty({ ...penalty, predefined_reason_id: value }),
+            icon: DocumentTextIcon,
+            options: predefinedReasons.map((reason) => ({
+              value: reason.id,
+              label: `${reason.reason} ($${reason.default_amount})`,
+            })),
+            required: true,
+          },
+        ]
+      : [
+          {
+            label: "Custom Reason",
+            type: "textarea",
+            value: penalty.reason,
+            onChange: (value) => setPenalty({ ...penalty, reason: value }),
+            icon: DocumentTextIcon,
+            required: true,
+          },
+        ]),
+    {
       label: "Amount",
       type: "number",
       value: penalty.amount,
@@ -105,12 +202,18 @@ export default function NewPenaltyPage() {
       required: true,
     },
     {
-      label: "Reason",
-      type: "textarea",
-      value: penalty.reason,
-      onChange: (value) => setPenalty({ ...penalty, reason: value }),
+      label: "Evidence URL",
+      type: "url",
+      value: penalty.evidence_url,
+      onChange: (value) => setPenalty({ ...penalty, evidence_url: value }),
       icon: DocumentTextIcon,
-      required: true,
+    },
+    {
+      label: "Resolution Notes",
+      type: "textarea",
+      value: penalty.resolution_notes,
+      onChange: (value) => setPenalty({ ...penalty, resolution_notes: value }),
+      icon: DocumentTextIcon,
     },
   ];
 

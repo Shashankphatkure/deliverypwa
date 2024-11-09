@@ -10,6 +10,9 @@ import {
   ArrowLeftIcon,
   TruckIcon,
   ClockIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ExclamationCircleIcon,
 } from "@heroicons/react/24/outline";
 
 export default function PaymentDetailsPage({ params }) {
@@ -17,6 +20,7 @@ export default function PaymentDetailsPage({ params }) {
   const paymentId = use(params).id;
   const [payment, setPayment] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [processedOrders, setProcessedOrders] = useState([]);
   const supabase = createClientComponentClient();
 
   useEffect(() => {
@@ -30,13 +34,35 @@ export default function PaymentDetailsPage({ params }) {
         .select(
           `
           *,
-          delivery_personnel:delivery_personnel(full_name, email, phone)
+          delivery_personnel:delivery_personnel(
+            id,
+            full_name,
+            email,
+            phone,
+            bank_account_no,
+            bank_ifsc_code,
+            vehicle_type,
+            vehicle_number
+          )
         `
         )
         .eq("id", paymentId)
         .single();
 
       if (error) throw error;
+
+      // Fetch processed orders if available
+      if (data.processed_orders && data.processed_orders.length > 0) {
+        const { data: ordersData, error: ordersError } = await supabase
+          .from("orders")
+          .select("*")
+          .in("id", data.processed_orders);
+
+        if (!ordersError) {
+          setProcessedOrders(ordersData);
+        }
+      }
+
       setPayment(data);
     } catch (error) {
       console.error("Error fetching payment details:", error);
@@ -61,7 +87,7 @@ export default function PaymentDetailsPage({ params }) {
       await supabase.from("notifications").insert([
         {
           recipient_type: "driver",
-          recipient_id: payment.driverid,
+          recipient_id: payment.delivery_personnel.id,
           title: "Payment Status Updated",
           message: `Your payment status has been updated to ${newStatus}`,
           type: "payment",
@@ -73,15 +99,46 @@ export default function PaymentDetailsPage({ params }) {
     }
   }
 
+  const getStatusBadge = (status) => {
+    const badges = {
+      completed: {
+        bg: "bg-green-100",
+        text: "text-green-800",
+        icon: CheckCircleIcon,
+      },
+      pending: {
+        bg: "bg-yellow-100",
+        text: "text-yellow-800",
+        icon: ExclamationCircleIcon,
+      },
+      failed: {
+        bg: "bg-red-100",
+        text: "text-red-800",
+        icon: XCircleIcon,
+      },
+    };
+
+    const badge = badges[status] || badges.pending;
+
+    return (
+      <span
+        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${badge.bg} ${badge.text} gap-1`}
+      >
+        <badge.icon className="w-4 h-4" />
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
+    );
+  };
+
   if (loading) {
     return (
       <DashboardLayout title="Payment Details">
-        <div className="p-6">
-          <div className="max-w-3xl mx-auto space-y-4">
-            {[...Array(4)].map((_, i) => (
+        <div className="max-w-[1600px] mx-auto p-6">
+          <div className="space-y-6">
+            {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className="animate-pulse bg-[#f3f2f1] rounded-lg h-16"
+                className="animate-pulse bg-gray-100 rounded-xl h-40"
               />
             ))}
           </div>
@@ -93,150 +150,209 @@ export default function PaymentDetailsPage({ params }) {
   return (
     <DashboardLayout
       title="Payment Details"
+      subtitle={`Payment #${paymentId}`}
       actions={
         <button
           onClick={() => router.push("/dashboard/payments")}
-          className="dashboard-button-secondary flex items-center gap-2"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
         >
           <ArrowLeftIcon className="w-5 h-5" />
           Back to Payments
         </button>
       }
     >
-      <div className="max-w-3xl mx-auto p-6">
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          {/* Driver Information */}
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Driver Information
-            </h2>
-            <div className="flex items-center">
-              <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
-                <UserGroupIcon className="h-6 w-6 text-gray-500" />
-              </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-medium text-gray-900">
-                  {payment.delivery_personnel?.full_name}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  {payment.delivery_personnel?.email}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {payment.delivery_personnel?.phone}
-                </p>
-              </div>
+      <div className="max-w-[1600px] mx-auto p-6">
+        <div className="space-y-6">
+          {/* Payment Summary */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Payment Summary
+              </h3>
+              {getStatusBadge(payment.paymentstatus)}
             </div>
-          </div>
-
-          {/* Payment Details */}
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">
-                  Final Amount
-                </label>
-                <div className="mt-1 flex items-center">
-                  <BanknotesIcon className="h-5 w-5 text-gray-400 mr-2" />
-                  <span className="text-lg font-semibold">
-                    ${payment.finalamount}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-500">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="bg-blue-50 rounded-lg p-4">
+                <p className="text-sm text-blue-600 font-medium">
                   Total Orders
-                </label>
-                <div className="mt-1 flex items-center">
-                  <DocumentTextIcon className="h-5 w-5 text-gray-400 mr-2" />
-                  <span className="text-lg">{payment.totalorders}</span>
-                </div>
+                </p>
+                <p className="text-2xl font-bold text-blue-700">
+                  {payment.totalorders}
+                </p>
               </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-500">
+              <div className="bg-green-50 rounded-lg p-4">
+                <p className="text-sm text-green-600 font-medium">
                   Total Distance
-                </label>
-                <div className="mt-1 flex items-center">
-                  <TruckIcon className="h-5 w-5 text-gray-400 mr-2" />
-                  <span className="text-lg">{payment.totalkm} km</span>
-                </div>
+                </p>
+                <p className="text-2xl font-bold text-green-700">
+                  {payment.totalkm} km
+                </p>
               </div>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">
-                  Advance
-                </label>
-                <div className="mt-1 flex items-center">
-                  <BanknotesIcon className="h-5 w-5 text-gray-400 mr-2" />
-                  <span className="text-lg">${payment.advance || 0}</span>
-                </div>
+              <div className="bg-red-50 rounded-lg p-4">
+                <p className="text-sm text-red-600 font-medium">Penalties</p>
+                <p className="text-2xl font-bold text-red-700">
+                  ${payment.penalty || 0}
+                </p>
               </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-500">
-                  Penalty
-                </label>
-                <div className="mt-1 flex items-center">
-                  <BanknotesIcon className="h-5 w-5 text-red-400 mr-2" />
-                  <span className="text-lg text-red-600">
-                    ${payment.penalty || 0}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-500">
-                  Created At
-                </label>
-                <div className="mt-1 flex items-center">
-                  <ClockIcon className="h-5 w-5 text-gray-400 mr-2" />
-                  <span className="text-lg">
-                    {new Date(payment.created_at).toLocaleDateString()}
-                  </span>
-                </div>
+              <div className="bg-purple-50 rounded-lg p-4">
+                <p className="text-sm text-purple-600 font-medium">
+                  Final Amount
+                </p>
+                <p className="text-2xl font-bold text-purple-700">
+                  ${payment.finalamount}
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Payment Status */}
-          <div className="p-6 bg-gray-50 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">
-                  Payment Status
+          {/* Driver Information */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Driver Information
                 </h3>
-                <span
-                  className={`mt-1 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                    payment.paymentstatus === "completed"
-                      ? "bg-green-100 text-green-800"
-                      : payment.paymentstatus === "pending"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
-                >
-                  {payment.paymentstatus}
+                <span className="px-3 py-1 text-sm font-medium text-green-700 bg-green-100 rounded-full">
+                  Active Driver
                 </span>
               </div>
-              <div className="flex gap-2">
-                {payment.paymentstatus !== "completed" && (
-                  <button
-                    onClick={() => handleStatusUpdate("completed")}
-                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                  >
-                    Mark as Completed
-                  </button>
-                )}
-                {payment.paymentstatus !== "failed" && (
-                  <button
-                    onClick={() => handleStatusUpdate("failed")}
-                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                  >
-                    Mark as Failed
-                  </button>
-                )}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Full Name</p>
+                    <p className="text-base font-semibold text-gray-900">
+                      {payment.delivery_personnel?.full_name}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Phone</p>
+                    <p className="text-base font-semibold text-gray-900">
+                      {payment.delivery_personnel?.phone}
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Bank Account</p>
+                    <p className="text-base font-semibold text-gray-900">
+                      {payment.delivery_personnel?.bank_account_no}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">IFSC Code</p>
+                    <p className="text-base font-semibold text-gray-900">
+                      {payment.delivery_personnel?.bank_ifsc_code}
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">
+                      Vehicle Details
+                    </p>
+                    <p className="text-base font-semibold text-gray-900">
+                      {payment.delivery_personnel?.vehicle_type} -{" "}
+                      {payment.delivery_personnel?.vehicle_number}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Created At</p>
+                    <p className="text-base font-semibold text-gray-900">
+                      {new Date(payment.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Processed Orders */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Processed Orders
+                </h3>
+                <span className="px-3 py-1 text-sm font-medium text-blue-700 bg-blue-100 rounded-full">
+                  {processedOrders.length} Orders
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Order ID
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Distance
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Amount
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {processedOrders.map((order) => (
+                      <tr
+                        key={order.id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          #{order.id}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {new Date(order.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {order.distance} km
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          ${order.total_amount}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* Status Update Actions */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Payment Status
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Update the payment status if needed
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  {payment.paymentstatus !== "completed" && (
+                    <button
+                      onClick={() => handleStatusUpdate("completed")}
+                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                    >
+                      <CheckCircleIcon className="w-5 h-5 mr-2" />
+                      Mark as Completed
+                    </button>
+                  )}
+                  {payment.paymentstatus !== "failed" && (
+                    <button
+                      onClick={() => handleStatusUpdate("failed")}
+                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                    >
+                      <XCircleIcon className="w-5 h-5 mr-2" />
+                      Mark as Failed
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>

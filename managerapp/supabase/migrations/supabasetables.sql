@@ -316,3 +316,32 @@ create trigger update_delivery_personnel_updated_at
 create trigger update_delivery_assignments_updated_at
     before update on delivery_assignments
     for each row execute function update_updated_at_column();     
+
+
+
+-- Penalty Reasons table (for predefined reasons)
+create table penalty_reasons (
+    id uuid primary key default uuid_generate_v4(),
+    reason text not null,
+    description text,
+    default_amount decimal(10,2),
+    is_active boolean default true,
+    created_at timestamp with time zone default now()
+);
+
+-- Insert some default penalty reasons
+INSERT INTO penalty_reasons (reason, description, default_amount) VALUES
+('Late Delivery', 'Delivery completed after promised time', 10.00),
+('Damaged Package', 'Package was damaged during delivery', 20.00),
+('Unprofessional Behavior', 'Complaints about driver behavior', 15.00),
+('Vehicle Maintenance', 'Failed to maintain vehicle standards', 25.00),
+('Missing Order Items', 'Items reported missing from delivery', 20.00);
+
+-- Update Penalties table
+ALTER TABLE penalties
+ADD COLUMN order_id bigint REFERENCES orders(id),
+ADD COLUMN reason_type text CHECK (reason_type in ('predefined', 'custom')) default 'custom',
+ADD COLUMN predefined_reason_id uuid REFERENCES penalty_reasons(id),
+ADD COLUMN evidence_url text,
+ADD COLUMN driver_response text,
+ADD COLUMN resolution_notes text;
