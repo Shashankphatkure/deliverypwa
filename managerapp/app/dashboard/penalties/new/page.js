@@ -28,8 +28,6 @@ export default function NewPenaltyPage() {
     reason_type: "predefined",
     predefined_reason_id: "",
     reason: "",
-    evidence_url: "",
-    resolution_notes: "",
   });
 
   useEffect(() => {
@@ -38,28 +36,23 @@ export default function NewPenaltyPage() {
 
   async function fetchInitialData() {
     try {
-      // Fetch drivers
-      const { data: driversData } = await supabase
-        .from("delivery_personnel")
-        .select("id, full_name")
-        .eq("is_active", true);
+      const [driversResponse, reasonsResponse, ordersResponse] =
+        await Promise.all([
+          supabase
+            .from("delivery_personnel")
+            .select("id, full_name, email")
+            .eq("is_active", true),
+          supabase.from("penalty_reasons").select("*").eq("is_active", true),
+          supabase
+            .from("orders")
+            .select("id, created_at, status, customername")
+            .order("created_at", { ascending: false })
+            .limit(50),
+        ]);
 
-      // Fetch predefined reasons
-      const { data: reasonsData } = await supabase
-        .from("penalty_reasons")
-        .select("*")
-        .eq("is_active", true);
-
-      // Fetch recent orders
-      const { data: ordersData } = await supabase
-        .from("orders")
-        .select("id, created_at, status")
-        .order("created_at", { ascending: false })
-        .limit(50);
-
-      setDrivers(driversData || []);
-      setPredefinedReasons(reasonsData || []);
-      setOrders(ordersData || []);
+      setDrivers(driversResponse.data || []);
+      setPredefinedReasons(reasonsResponse.data || []);
+      setOrders(ordersResponse.data || []);
     } catch (error) {
       console.error("Error fetching initial data:", error);
     } finally {
@@ -67,7 +60,6 @@ export default function NewPenaltyPage() {
     }
   }
 
-  // Handle predefined reason selection
   useEffect(() => {
     if (penalty.predefined_reason_id && penalty.reason_type === "predefined") {
       const selectedReason = predefinedReasons.find(
@@ -99,8 +91,6 @@ export default function NewPenaltyPage() {
               ? penalty.predefined_reason_id
               : null,
           reason: penalty.reason,
-          evidence_url: penalty.evidence_url,
-          resolution_notes: penalty.resolution_notes,
           status: "pending",
         },
       ]);
@@ -113,7 +103,7 @@ export default function NewPenaltyPage() {
           recipient_type: "driver",
           recipient_id: penalty.driver_id,
           title: "New Penalty Added",
-          message: `A penalty of $${penalty.amount} has been added to your account. Reason: ${penalty.reason}`,
+          message: `A penalty of $${penalty.amount} has been added. Reason: ${penalty.reason}`,
           type: "penalty",
         },
       ]);
@@ -127,95 +117,19 @@ export default function NewPenaltyPage() {
     }
   }
 
-  const formFields = [
-    {
-      label: "Driver",
-      type: "select",
-      value: penalty.driver_id,
-      onChange: (value) => setPenalty({ ...penalty, driver_id: value }),
-      icon: UserGroupIcon,
-      options: drivers.map((driver) => ({
-        value: driver.id,
-        label: driver.full_name,
-      })),
-      required: true,
-    },
-    {
-      label: "Related Order",
-      type: "select",
-      value: penalty.order_id,
-      onChange: (value) => setPenalty({ ...penalty, order_id: value }),
-      icon: ShoppingBagIcon,
-      options: orders.map((order) => ({
-        value: order.id,
-        label: `Order #${order.id} - ${new Date(
-          order.created_at
-        ).toLocaleDateString()}`,
-      })),
-    },
-    {
-      label: "Reason Type",
-      type: "select",
-      value: penalty.reason_type,
-      onChange: (value) =>
-        setPenalty({ ...penalty, reason_type: value, reason: "" }),
-      icon: ListBulletIcon,
-      options: [
-        { value: "predefined", label: "Predefined Reason" },
-        { value: "custom", label: "Custom Reason" },
-      ],
-      required: true,
-    },
-    ...(penalty.reason_type === "predefined"
-      ? [
-          {
-            label: "Select Reason",
-            type: "select",
-            value: penalty.predefined_reason_id,
-            onChange: (value) =>
-              setPenalty({ ...penalty, predefined_reason_id: value }),
-            icon: DocumentTextIcon,
-            options: predefinedReasons.map((reason) => ({
-              value: reason.id,
-              label: `${reason.reason} ($${reason.default_amount})`,
-            })),
-            required: true,
-          },
-        ]
-      : [
-          {
-            label: "Custom Reason",
-            type: "textarea",
-            value: penalty.reason,
-            onChange: (value) => setPenalty({ ...penalty, reason: value }),
-            icon: DocumentTextIcon,
-            required: true,
-          },
-        ]),
-    {
-      label: "Amount",
-      type: "number",
-      value: penalty.amount,
-      onChange: (value) => setPenalty({ ...penalty, amount: value }),
-      icon: CurrencyDollarIcon,
-      prefix: "$",
-      required: true,
-    },
-    {
-      label: "Evidence URL",
-      type: "url",
-      value: penalty.evidence_url,
-      onChange: (value) => setPenalty({ ...penalty, evidence_url: value }),
-      icon: DocumentTextIcon,
-    },
-    {
-      label: "Resolution Notes",
-      type: "textarea",
-      value: penalty.resolution_notes,
-      onChange: (value) => setPenalty({ ...penalty, resolution_notes: value }),
-      icon: DocumentTextIcon,
-    },
-  ];
+  if (loading) {
+    return (
+      <DashboardLayout title="Add New Penalty">
+        <div className="max-w-3xl mx-auto p-8">
+          <div className="animate-pulse space-y-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-12 bg-gray-100 rounded-lg" />
+            ))}
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout
@@ -224,7 +138,7 @@ export default function NewPenaltyPage() {
       actions={
         <button
           onClick={() => router.push("/dashboard/penalties")}
-          className="dashboard-button-secondary flex items-center gap-2"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
         >
           <ArrowLeftIcon className="w-5 h-5" />
           Back to Penalties
@@ -232,97 +146,221 @@ export default function NewPenaltyPage() {
       }
     >
       <div className="max-w-3xl mx-auto p-8">
-        {loading ? (
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                className="animate-pulse bg-[#f3f2f1] rounded-lg h-16"
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="bg-white border border-[#edebe9] rounded-lg shadow-sm p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {formFields.map((field) => (
-                <div key={field.label} className="space-y-2">
-                  <label className="text-sm font-semibold text-[#323130]">
-                    {field.label}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <form onSubmit={handleSubmit} className="divide-y divide-gray-200">
+            {/* Driver Selection */}
+            <div className="p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Driver Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Driver
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <field.icon className="h-5 w-5 text-[#605e5c]" />
+                      <UserGroupIcon className="h-5 w-5 text-gray-400" />
                     </div>
-                    {field.type === "select" ? (
-                      <select
-                        value={field.value}
-                        onChange={(e) => field.onChange(e.target.value)}
-                        className="block w-full rounded-md border border-[#8a8886] pl-10 py-2 text-sm focus:border-[#0078d4] focus:ring-[#0078d4]"
-                        required={field.required}
-                      >
-                        <option value="">Select Driver</option>
-                        {field.options.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    ) : field.type === "textarea" ? (
-                      <textarea
-                        value={field.value}
-                        onChange={(e) => field.onChange(e.target.value)}
-                        className="block w-full rounded-md border border-[#8a8886] pl-10 py-2 text-sm focus:border-[#0078d4] focus:ring-[#0078d4]"
-                        rows={4}
-                        required={field.required}
-                      />
-                    ) : (
-                      <div className="relative">
-                        {field.prefix && (
-                          <div className="absolute inset-y-0 left-10 flex items-center pointer-events-none">
-                            <span className="text-gray-500">
-                              {field.prefix}
-                            </span>
-                          </div>
-                        )}
-                        <input
-                          type={field.type}
-                          value={field.value}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          className={`block w-full rounded-md border border-[#8a8886] ${
-                            field.prefix ? "pl-14" : "pl-10"
-                          } py-2 text-sm focus:border-[#0078d4] focus:ring-[#0078d4]`}
-                          required={field.required}
-                          step={field.type === "number" ? "0.01" : undefined}
-                          min={field.type === "number" ? "0" : undefined}
-                        />
-                      </div>
-                    )}
+                    <select
+                      value={penalty.driver_id}
+                      onChange={(e) =>
+                        setPenalty({ ...penalty, driver_id: e.target.value })
+                      }
+                      className="block w-full pl-10 pr-4 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                      required
+                    >
+                      <option value="">Select a driver</option>
+                      {drivers.map((driver) => (
+                        <option key={driver.id} value={driver.id}>
+                          {driver.full_name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
-              ))}
 
-              <div className="pt-6 border-t border-[#edebe9]">
-                <div className="flex justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => router.push("/dashboard/penalties")}
-                    className="px-4 py-2 text-sm font-medium text-[#323130] bg-white border border-[#8a8886] rounded-md hover:bg-[#f3f2f1] focus:outline-none focus:ring-2 focus:ring-[#0078d4]"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="px-4 py-2 text-sm font-medium text-white bg-[#0078d4] border border-transparent rounded-md hover:bg-[#106ebe] focus:outline-none focus:ring-2 focus:ring-[#0078d4] flex items-center gap-2"
-                  >
-                    <ExclamationTriangleIcon className="w-5 h-5" />
-                    {submitting ? "Adding..." : "Add Penalty"}
-                  </button>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Related Order (Optional)
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <ShoppingBagIcon className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <select
+                      value={penalty.order_id}
+                      onChange={(e) =>
+                        setPenalty({ ...penalty, order_id: e.target.value })
+                      }
+                      className="block w-full pl-10 pr-4 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                    >
+                      <option value="">Select an order</option>
+                      {orders.map((order) => (
+                        <option key={order.id} value={order.id}>
+                          Order #{order.id} - {order.customername}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
-            </form>
-          </div>
-        )}
+            </div>
+
+            {/* Penalty Details */}
+            <div className="p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Penalty Details
+              </h3>
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Reason Type
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <ListBulletIcon className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <select
+                        value={penalty.reason_type}
+                        onChange={(e) =>
+                          setPenalty({
+                            ...penalty,
+                            reason_type: e.target.value,
+                            reason: "",
+                            predefined_reason_id: "",
+                            amount: "",
+                          })
+                        }
+                        className="block w-full pl-10 pr-4 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                        required
+                      >
+                        <option value="predefined">Predefined Reason</option>
+                        <option value="custom">Custom Reason</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {penalty.reason_type === "predefined" ? (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Select Reason
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <DocumentTextIcon className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <select
+                          value={penalty.predefined_reason_id}
+                          onChange={(e) =>
+                            setPenalty({
+                              ...penalty,
+                              predefined_reason_id: e.target.value,
+                            })
+                          }
+                          className="block w-full pl-10 pr-4 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                          required
+                        >
+                          <option value="">Select a reason</option>
+                          {predefinedReasons.map((reason) => (
+                            <option key={reason.id} value={reason.id}>
+                              {reason.reason} (${reason.default_amount})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Custom Reason
+                      </label>
+                      <textarea
+                        value={penalty.reason}
+                        onChange={(e) =>
+                          setPenalty({ ...penalty, reason: e.target.value })
+                        }
+                        className="block w-full px-4 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                        rows={3}
+                        required
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="w-full md:w-1/2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Penalty Amount
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <CurrencyDollarIcon className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="number"
+                      value={penalty.amount}
+                      onChange={(e) =>
+                        setPenalty({ ...penalty, amount: e.target.value })
+                      }
+                      className="block w-full pl-10 pr-4 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                      placeholder="0.00"
+                      step="0.01"
+                      min="0"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Form Actions */}
+            <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3 rounded-b-xl">
+              <button
+                type="button"
+                onClick={() => router.push("/dashboard/penalties")}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <ExclamationTriangleIcon className="w-5 h-5 mr-2" />
+                    Add Penalty
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </DashboardLayout>
   );
