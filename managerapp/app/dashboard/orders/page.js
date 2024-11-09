@@ -8,6 +8,7 @@ import {
   TruckIcon,
   CheckCircleIcon,
   BanknotesIcon,
+  PlusIcon,
 } from "@heroicons/react/24/outline";
 
 const getPaymentStatusColor = (status) => {
@@ -144,8 +145,11 @@ export default function OrdersPage() {
     <DashboardLayout
       title="Orders"
       actions={
-        <Link href="/dashboard/orders/new" className="dashboard-button-primary">
-          Create New Order
+        <Link
+          href="/dashboard/orders/new"
+          className="dashboard-button-primary flex items-center gap-2"
+        >
+          <PlusIcon className="w-5 h-5" /> Create New Order
         </Link>
       }
     >
@@ -153,7 +157,10 @@ export default function OrdersPage() {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {statsCards.map((card) => (
-            <div key={card.title} className="dashboard-card">
+            <div
+              key={card.title}
+              className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow"
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-[#605e5c]">
@@ -163,7 +170,7 @@ export default function OrdersPage() {
                     {card.value}
                   </p>
                 </div>
-                <div className={`p-3 rounded-lg bg-${card.color}-50`}>
+                <div className={`p-3 rounded-xl bg-${card.color}-50`}>
                   <card.icon className={`w-6 h-6 text-${card.color}-600`} />
                 </div>
               </div>
@@ -172,7 +179,7 @@ export default function OrdersPage() {
         </div>
 
         {/* Status Tabs */}
-        <div className="flex mb-6 bg-[#f3f2f1] rounded-lg p-1">
+        <div className="flex mb-6 bg-[#f3f2f1] rounded-xl p-1.5">
           {[
             "pending",
             "confirmed",
@@ -184,9 +191,9 @@ export default function OrdersPage() {
             <button
               key={status}
               onClick={() => setActiveTab(status)}
-              className={`flex-1 py-2 px-4 rounded-lg capitalize transition-all duration-200 ${
+              className={`flex-1 py-2.5 px-4 rounded-lg capitalize transition-all duration-200 text-sm font-medium ${
                 activeTab === status
-                  ? "bg-white shadow-md font-medium text-[#323130]"
+                  ? "bg-white shadow-sm text-[#323130]"
                   : "text-[#605e5c] hover:bg-white/50"
               }`}
             >
@@ -196,112 +203,153 @@ export default function OrdersPage() {
         </div>
 
         {/* Orders Table */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
           {loading ? (
             <div className="p-4 space-y-4">
               {[...Array(5)].map((_, i) => (
                 <div
                   key={i}
-                  className="animate-pulse h-16 bg-[#f3f2f1] rounded"
+                  className="animate-pulse h-16 bg-[#f3f2f1] rounded-lg"
                 />
               ))}
             </div>
           ) : (
-            <table className="min-w-full divide-y divide-[#edebe9]">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th>Order ID</th>
-                  <th>Customer</th>
-                  <th>Driver</th>
-                  <th>Start</th>
-                  <th>Destination</th>
-                  <th>Amount</th>
-                  <th>Payment Status</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.map((order) => (
-                  <tr key={order.id}>
-                    <td>#{order.id}</td>
-                    <td>
-                      <div>
-                        <p className="font-medium">{order.customername}</p>
-                        <p className="text-sm text-gray-500">
-                          {order.users?.phone}
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-[#edebe9]">
+                <thead>
+                  <tr className="bg-[#f8f8f8]">
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Order ID
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Customer
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Driver
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Pickup
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Delivery
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Amount
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Payment
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {orders.map((order) => (
+                    <tr key={order.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        #{order.id}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            {order.customername}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {order.users?.phone}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            {order.drivername || "Unassigned"}
+                          </p>
+                          {order.delivery_personnel?.phone && (
+                            <p className="text-sm text-gray-500">
+                              {order.delivery_personnel.phone}
+                            </p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-sm text-gray-900 line-clamp-2">
+                          {order.start}
                         </p>
-                      </div>
-                    </td>
-                    <td>
-                      <div>
-                        <p className="font-medium">{order.drivername}</p>
-                        <p className="text-sm text-gray-500">
-                          {order.delivery_personnel?.phone}
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-sm text-gray-900 line-clamp-2">
+                          {order.destination}
                         </p>
-                      </div>
-                    </td>
-                    <td>{order.start}</td>
-                    <td>{order.destination}</td>
-                    <td>${parseFloat(order.total_amount || 0).toFixed(2)}</td>
-                    <td>
-                      <span
-                        className={`status-badge ${getPaymentStatusColor(
-                          order.payment_status
-                        )}`}
-                      >
-                        {order.payment_status}
-                      </span>
-                    </td>
-                    <td>
-                      <span
-                        className={`status-badge ${getStatusColor(
-                          order.status
-                        )}`}
-                      >
-                        {order.status}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="space-x-2">
-                        <Link
-                          href={`/dashboard/orders/${order.id}/view`}
-                          className="text-blue-600 hover:text-blue-900"
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <p className="text-sm font-medium text-gray-900">
+                          ${parseFloat(order.total_amount || 0).toFixed(2)}
+                        </p>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPaymentStatusColor(
+                            order.payment_status
+                          )}`}
                         >
-                          View
-                        </Link>
-                        {order.status === "pending" &&
-                          !order.delivery_assignments?.[0] && (
+                          {order.payment_status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                            order.status
+                          )}`}
+                        >
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/dashboard/orders/${order.id}/view`}
+                            className="text-blue-600 hover:text-blue-900 font-medium"
+                          >
+                            View
+                          </Link>
+                          {order.status === "pending" && !order.driverid && (
                             <Link
                               href={`/dashboard/orders/${order.id}/assign`}
-                              className="text-green-600 hover:text-green-900"
+                              className="text-green-600 hover:text-green-900 font-medium"
                             >
                               Assign
                             </Link>
                           )}
-                        {order.status === "pending" &&
-                          order.delivery_assignments?.[0] && (
+                          {order.status === "pending" && order.driverid && (
                             <Link
                               href={`/dashboard/orders/${order.id}/transfer`}
-                              className="text-orange-600 hover:text-orange-900"
+                              className="text-orange-600 hover:text-orange-900 font-medium"
                             >
                               Transfer
                             </Link>
                           )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
 
           {orders.length === 0 && !loading && (
             <div className="text-center py-12">
-              <ClockIcon className="mx-auto h-12 w-12 text-[#605e5c]" />
-              <h3 className="mt-2 text-sm font-medium text-[#323130]">
-                No {activeTab} orders found
+              <ClockIcon className="mx-auto h-12 w-12 text-gray-300" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">
+                No {activeTab} orders
               </h3>
+              <p className="mt-1 text-sm text-gray-500">
+                There are no orders with {activeTab} status at the moment.
+              </p>
             </div>
           )}
         </div>
