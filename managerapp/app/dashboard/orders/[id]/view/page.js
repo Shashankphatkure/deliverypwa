@@ -13,6 +13,8 @@ import {
   DocumentTextIcon,
   MapPinIcon,
   PhoneIcon,
+  CurrencyDollarIcon,
+  ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
 
 export default function ViewOrderPage({ params }) {
@@ -34,7 +36,7 @@ export default function ViewOrderPage({ params }) {
           `
           *,
           users (full_name, phone),
-          delivery_personnel (full_name, phone)
+          delivery_personnel (full_name, phone, vehicle_number, vehicle_type)
         `
         )
         .eq("id", id)
@@ -58,6 +60,15 @@ export default function ViewOrderPage({ params }) {
       picked_up: "bg-indigo-100 text-indigo-800",
       delivered: "bg-green-100 text-green-800",
       cancelled: "bg-red-100 text-red-800",
+    };
+    return colors[status] || "bg-gray-100 text-gray-800";
+  };
+
+  const getPaymentStatusColor = (status) => {
+    const colors = {
+      pending: "bg-yellow-100 text-yellow-800",
+      completed: "bg-green-100 text-green-800",
+      failed: "bg-red-100 text-red-800",
     };
     return colors[status] || "bg-gray-100 text-gray-800";
   };
@@ -96,35 +107,51 @@ export default function ViewOrderPage({ params }) {
 
   const orderSections = [
     {
-      title: "Order Status",
-      icon: ClockIcon,
+      title: "Order Information",
+      icon: DocumentTextIcon,
       content: (
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600">Status:</span>
-            <span
-              className={`px-2 py-1 rounded-full text-sm ${getStatusColor(
-                order.status
-              )}`}
-            >
-              {order.status}
-            </span>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-500">Order ID</p>
+              <p className="font-medium">#{order.id}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Created At</p>
+              <p className="font-medium">
+                {new Date(order.created_at).toLocaleString()}
+              </p>
+            </div>
           </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600">Payment Status:</span>
-            <span
-              className={`px-2 py-1 rounded-full text-sm ${
-                order.payment_status === "completed"
-                  ? "bg-green-100 text-green-800"
-                  : "bg-yellow-100 text-yellow-800"
-              }`}
-            >
-              {order.payment_status}
-            </span>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-500">Status</p>
+              <span className={`status-badge ${getStatusColor(order.status)}`}>
+                {order.status}
+              </span>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Payment Status</p>
+              <span
+                className={`status-badge ${getPaymentStatusColor(
+                  order.payment_status
+                )}`}
+              >
+                {order.payment_status}
+              </span>
+            </div>
           </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600">Created At:</span>
-            <span>{new Date(order.created_at).toLocaleString()}</span>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-500">Payment Method</p>
+              <p className="font-medium capitalize">{order.payment_method}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Total Amount</p>
+              <p className="font-medium text-green-600">
+                ${parseFloat(order.total_amount || 0).toFixed(2)}
+              </p>
+            </div>
           </div>
         </div>
       ),
@@ -133,87 +160,89 @@ export default function ViewOrderPage({ params }) {
       title: "Customer Details",
       icon: UserIcon,
       content: (
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="flex items-center gap-2">
             <UserIcon className="w-5 h-5 text-gray-400" />
-            <span>{order.users?.full_name}</span>
+            <span className="font-medium">{order.customername}</span>
           </div>
           <div className="flex items-center gap-2">
             <PhoneIcon className="w-5 h-5 text-gray-400" />
             <span>{order.users?.phone}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <MapPinIcon className="w-5 h-5 text-gray-400" />
-            <span>{order.delivery_address}</span>
+          <div className="space-y-2">
+            <p className="text-sm text-gray-500">Delivery Address</p>
+            <div className="flex items-start gap-2">
+              <MapPinIcon className="w-5 h-5 text-gray-400 mt-0.5" />
+              <span className="flex-1">{order.destination}</span>
+            </div>
           </div>
           {order.delivery_notes && (
-            <div className="flex items-center gap-2">
-              <DocumentTextIcon className="w-5 h-5 text-gray-400" />
-              <span>{order.delivery_notes}</span>
+            <div className="space-y-2">
+              <p className="text-sm text-gray-500">Delivery Notes</p>
+              <div className="flex items-start gap-2">
+                <DocumentTextIcon className="w-5 h-5 text-gray-400 mt-0.5" />
+                <span className="flex-1">{order.delivery_notes}</span>
+              </div>
             </div>
           )}
         </div>
       ),
     },
     {
-      title: "Store Details",
+      title: "Pickup Details",
       icon: BuildingStorefrontIcon,
       content: (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <BuildingStorefrontIcon className="w-5 h-5 text-gray-400" />
-            <span>{order.stores?.name}</span>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <p className="text-sm text-gray-500">Pickup Location</p>
+            <div className="flex items-start gap-2">
+              <MapPinIcon className="w-5 h-5 text-gray-400 mt-0.5" />
+              <span className="flex-1">{order.start}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <MapPinIcon className="w-5 h-5 text-gray-400" />
-            <span>{order.stores?.address}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <PhoneIcon className="w-5 h-5 text-gray-400" />
-            <span>{order.stores?.phone}</span>
-          </div>
+          {order.time && (
+            <div className="flex items-center gap-2">
+              <ClockIcon className="w-5 h-5 text-gray-400" />
+              <span>Estimated Time: {order.time}</span>
+            </div>
+          )}
+          {order.distance && (
+            <div className="flex items-center gap-2">
+              <MapPinIcon className="w-5 h-5 text-gray-400" />
+              <span>Distance: {order.distance}</span>
+            </div>
+          )}
         </div>
       ),
     },
     {
-      title: "Delivery Details",
+      title: "Driver Details",
       icon: TruckIcon,
-      content: order.delivery_assignments?.[0] ? (
-        <div className="space-y-3">
+      content: order.driverid ? (
+        <div className="space-y-4">
           <div className="flex items-center gap-2">
             <UserIcon className="w-5 h-5 text-gray-400" />
-            <span>
-              {order.delivery_assignments[0].delivery_personnel?.full_name}
-            </span>
+            <span className="font-medium">{order.drivername}</span>
           </div>
           <div className="flex items-center gap-2">
             <PhoneIcon className="w-5 h-5 text-gray-400" />
-            <span>
-              {order.delivery_assignments[0].delivery_personnel?.phone}
-            </span>
+            <span>{order.delivery_personnel?.phone}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <ClockIcon className="w-5 h-5 text-gray-400" />
-            <span>
-              Pickup:{" "}
-              {order.delivery_assignments[0].pickup_time
-                ? new Date(
-                    order.delivery_assignments[0].pickup_time
-                  ).toLocaleString()
-                : "Not picked up yet"}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <ClockIcon className="w-5 h-5 text-gray-400" />
-            <span>
-              Delivery:{" "}
-              {order.delivery_assignments[0].delivery_time
-                ? new Date(
-                    order.delivery_assignments[0].delivery_time
-                  ).toLocaleString()
-                : "Not delivered yet"}
-            </span>
-          </div>
+          {order.delivery_personnel?.vehicle_type && (
+            <div className="flex items-center gap-2">
+              <TruckIcon className="w-5 h-5 text-gray-400" />
+              <span>
+                {order.delivery_personnel.vehicle_type} -{" "}
+                {order.delivery_personnel.vehicle_number}
+              </span>
+            </div>
+          )}
+          {order.completiontime && (
+            <div className="flex items-center gap-2">
+              <ClockIcon className="w-5 h-5 text-gray-400" />
+              <span>Completed at: {order.completiontime}</span>
+            </div>
+          )}
         </div>
       ) : (
         <p className="text-gray-500">No driver assigned yet</p>
@@ -223,10 +252,10 @@ export default function ViewOrderPage({ params }) {
 
   return (
     <DashboardLayout
-      title={`Order #${id.slice(0, 8)}`}
+      title={`Order #${id}`}
       actions={
         <div className="space-x-2">
-          {order.status === "pending" && !order.delivery_assignments?.[0] && (
+          {order.status === "pending" && !order.driverid && (
             <Link
               href={`/dashboard/orders/${id}/assign`}
               className="dashboard-button-primary"
@@ -234,7 +263,7 @@ export default function ViewOrderPage({ params }) {
               Assign Driver
             </Link>
           )}
-          {order.status === "pending" && order.delivery_assignments?.[0] && (
+          {order.status === "pending" && order.driverid && (
             <Link
               href={`/dashboard/orders/${id}/transfer`}
               className="dashboard-button-secondary"
@@ -244,16 +273,17 @@ export default function ViewOrderPage({ params }) {
           )}
           <button
             onClick={() => router.push("/dashboard/orders")}
-            className="dashboard-button-secondary"
+            className="dashboard-button-secondary flex items-center gap-2"
           >
+            <ArrowLeftIcon className="w-5 h-5" />
             Back to Orders
           </button>
         </div>
       }
     >
       <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          {orderSections.map((section, index) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {orderSections.map((section) => (
             <div key={section.title} className="dashboard-card">
               <div className="flex items-center gap-2 mb-4">
                 <section.icon className="w-6 h-6 text-[#605e5c]" />
@@ -262,41 +292,6 @@ export default function ViewOrderPage({ params }) {
               {section.content}
             </div>
           ))}
-        </div>
-
-        <div className="dashboard-card">
-          <div className="flex items-center gap-2 mb-4">
-            <DocumentTextIcon className="w-6 h-6 text-[#605e5c]" />
-            <h2 className="text-lg font-semibold">Order Items</h2>
-          </div>
-          <table className="min-w-full">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left py-2">Item</th>
-                <th className="text-right py-2">Quantity</th>
-                <th className="text-right py-2">Price</th>
-                <th className="text-right py-2">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {order.order_items?.map((item, index) => (
-                <tr key={index} className="border-b">
-                  <td className="py-2">{item.menu_items?.name}</td>
-                  <td className="text-right">{item.quantity}</td>
-                  <td className="text-right">${item.price_at_time}</td>
-                  <td className="text-right">
-                    ${(item.quantity * item.price_at_time).toFixed(2)}
-                  </td>
-                </tr>
-              ))}
-              <tr className="font-semibold">
-                <td colSpan={3} className="text-right py-2">
-                  Total Amount:
-                </td>
-                <td className="text-right">${order.total_amount}</td>
-              </tr>
-            </tbody>
-          </table>
         </div>
       </div>
     </DashboardLayout>
