@@ -2,7 +2,18 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { use } from "react";
+import DashboardLayout from "../../../components/DashboardLayout";
+import {
+  TruckIcon,
+  UserIcon,
+  MapPinIcon,
+  ClockIcon,
+  BuildingStorefrontIcon,
+  ArrowLeftIcon,
+  ArrowTopRightOnSquareIcon,
+} from "@heroicons/react/24/outline";
 
 export default function DriverAssignmentsPage({ params }) {
   const router = useRouter();
@@ -69,96 +80,102 @@ export default function DriverAssignmentsPage({ params }) {
     return colors[status] || "bg-gray-100 text-gray-800";
   };
 
-  if (loading) return <div className="p-6">Loading...</div>;
-  if (!driver) return <div className="p-6">Driver not found</div>;
-
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Driver Assignments</h1>
-          <p className="text-gray-600">
-            Driver: {driver.full_name} ({driver.phone})
-          </p>
-        </div>
+    <DashboardLayout
+      title="Driver Assignments"
+      subtitle={
+        driver
+          ? `${driver.full_name} (${driver.phone})`
+          : "Loading driver details..."
+      }
+      actions={
         <button
           onClick={() => router.push("/dashboard/drivers")}
-          className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+          className="dashboard-button-secondary flex items-center gap-2"
         >
+          <ArrowLeftIcon className="w-5 h-5" />
           Back to Drivers
         </button>
-      </div>
-
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-          {assignments.map((assignment) => (
-            <div
-              key={assignment.id}
-              className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-            >
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <span className="font-medium">
-                    Order #{assignment.orders.id.slice(0, 8)}
-                  </span>
+      }
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="p-6"
+      >
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="animate-pulse bg-white/50 rounded-xl h-48 backdrop-blur-lg"
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {assignments.map((assignment) => (
+              <motion.div
+                key={assignment.id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="dashboard-card hover:shadow-lg transition-shadow"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-2">
+                    <TruckIcon className="w-5 h-5 text-gray-400" />
+                    <span className="font-medium">
+                      Order #{assignment.orders.id.slice(0, 8)}
+                    </span>
+                  </div>
                   <span
-                    className={`ml-2 px-2 py-1 rounded-full text-xs ${getStatusColor(
+                    className={`px-2 py-1 rounded-full text-xs ${getStatusColor(
                       assignment.orders.status
                     )}`}
                   >
                     {assignment.orders.status}
                   </span>
                 </div>
-                <span className="text-sm text-gray-500">
-                  ${parseFloat(assignment.orders.total_amount).toFixed(2)}
-                </span>
-              </div>
 
-              <div className="space-y-1 text-sm">
-                <p>
-                  <span className="text-gray-600">Store:</span>{" "}
-                  {assignment.orders.stores.name}
-                </p>
-                <p>
-                  <span className="text-gray-600">Delivery to:</span>{" "}
-                  {assignment.orders.delivery_address}
-                </p>
-                <p>
-                  <span className="text-gray-600">Assigned:</span>{" "}
-                  {new Date(assignment.created_at).toLocaleString()}
-                </p>
-                {assignment.pickup_time && (
-                  <p>
-                    <span className="text-gray-600">Picked up:</span>{" "}
-                    {new Date(assignment.pickup_time).toLocaleString()}
-                  </p>
-                )}
-                {assignment.delivery_time && (
-                  <p>
-                    <span className="text-gray-600">Delivered:</span>{" "}
-                    {new Date(assignment.delivery_time).toLocaleString()}
-                  </p>
-                )}
-              </div>
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-start gap-2">
+                    <BuildingStorefrontIcon className="w-5 h-5 text-gray-400 shrink-0" />
+                    <span>{assignment.orders.stores.name}</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <MapPinIcon className="w-5 h-5 text-gray-400 shrink-0" />
+                    <span className="text-gray-600">
+                      {assignment.orders.delivery_address}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <ClockIcon className="w-5 h-5 text-gray-400" />
+                    <span className="text-gray-600">
+                      {new Date(assignment.created_at).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
 
-              <div className="mt-3">
-                <a
-                  href={`/dashboard/orders/${assignment.orders.id}/view`}
-                  className="text-blue-600 hover:text-blue-800 text-sm"
-                >
-                  View Order Details →
-                </a>
-              </div>
-            </div>
-          ))}
-        </div>
+                <div className="mt-4 pt-4 border-t">
+                  <a
+                    href={`/dashboard/orders/${assignment.orders.id}/view`}
+                    className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                  >
+                    View Details
+                    <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                  </a>
+                </div>
+              </motion.div>
+            ))}
 
-        {assignments.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            No assignments found for this driver
+            {assignments.length === 0 && (
+              <div className="col-span-full text-center py-12 text-gray-500">
+                No assignments found for this driver
+              </div>
+            )}
           </div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </DashboardLayout>
   );
 }

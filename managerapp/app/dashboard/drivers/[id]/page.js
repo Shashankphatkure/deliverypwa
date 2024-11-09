@@ -2,6 +2,15 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import DashboardLayout from "../../components/DashboardLayout";
+import {
+  UserIcon,
+  EnvelopeIcon,
+  PhoneIcon,
+  CheckCircleIcon,
+  ArrowLeftIcon,
+} from "@heroicons/react/24/outline";
 
 export default function DriverDetailPage({ params }) {
   const router = useRouter();
@@ -68,81 +77,128 @@ export default function DriverDetailPage({ params }) {
     }
   }
 
-  if (loading) return <div className="p-6">Loading...</div>;
+  const formFields = [
+    {
+      label: "Full Name",
+      type: "text",
+      value: driver.full_name,
+      onChange: (value) => setDriver({ ...driver, full_name: value }),
+      icon: UserIcon,
+      required: true,
+    },
+    {
+      label: "Email",
+      type: "email",
+      value: driver.email,
+      onChange: (value) => setDriver({ ...driver, email: value }),
+      icon: EnvelopeIcon,
+      required: true,
+    },
+    {
+      label: "Phone",
+      type: "tel",
+      value: driver.phone,
+      onChange: (value) => setDriver({ ...driver, phone: value }),
+      icon: PhoneIcon,
+      required: true,
+    },
+  ];
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">
-        {id === "new" ? "Add New Driver" : "Edit Driver"}
-      </h1>
+    <DashboardLayout
+      title={id === "new" ? "Add New Driver" : "Edit Driver"}
+      actions={
+        <button
+          onClick={() => router.push("/dashboard/drivers")}
+          className="dashboard-button-secondary flex items-center gap-2"
+        >
+          <ArrowLeftIcon className="w-5 h-5" />
+          Back to Drivers
+        </button>
+      }
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-2xl mx-auto p-6"
+      >
+        {loading ? (
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="animate-pulse bg-white/50 rounded-xl h-16 backdrop-blur-lg"
+              />
+            ))}
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {formFields.map((field) => (
+              <motion.div
+                key={field.label}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="dashboard-card"
+              >
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {field.label}
+                </label>
+                <div className="relative rounded-md shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <field.icon
+                      className="h-5 h-5 text-gray-400"
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <input
+                    type={field.type}
+                    value={field.value}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    className="dashboard-input pl-10"
+                    required={field.required}
+                  />
+                </div>
+              </motion.div>
+            ))}
 
-      <form onSubmit={handleSubmit} className="max-w-lg">
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Full Name</label>
-          <input
-            type="text"
-            value={driver.full_name}
-            onChange={(e) =>
-              setDriver({ ...driver, full_name: e.target.value })
-            }
-            className="w-full p-2 border rounded"
-            required
-          />
-        </div>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="dashboard-card"
+            >
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={driver.is_active}
+                  onChange={(e) =>
+                    setDriver({ ...driver, is_active: e.target.checked })
+                  }
+                  className="form-checkbox h-5 w-5 text-blue-600"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  Active Status
+                </span>
+              </label>
+            </motion.div>
 
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Email</label>
-          <input
-            type="email"
-            value={driver.email}
-            onChange={(e) => setDriver({ ...driver, email: e.target.value })}
-            className="w-full p-2 border rounded"
-            required
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Phone</label>
-          <input
-            type="tel"
-            value={driver.phone}
-            onChange={(e) => setDriver({ ...driver, phone: e.target.value })}
-            className="w-full p-2 border rounded"
-            required
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              checked={driver.is_active}
-              onChange={(e) =>
-                setDriver({ ...driver, is_active: e.target.checked })
-              }
-              className="mr-2"
-            />
-            <span className="text-sm font-medium">Active</span>
-          </label>
-        </div>
-
-        <div className="flex gap-4">
-          <button
-            type="submit"
-            disabled={saving}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-300"
-          >
-            {saving ? "Saving..." : "Save"}
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push("/dashboard/drivers")}
-            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
-    </div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="flex justify-end space-x-4"
+            >
+              <button
+                type="submit"
+                disabled={saving}
+                className="dashboard-button-primary flex items-center gap-2"
+              >
+                <CheckCircleIcon className="w-5 h-5" />
+                {saving ? "Saving..." : "Save Driver"}
+              </button>
+            </motion.div>
+          </form>
+        )}
+      </motion.div>
+    </DashboardLayout>
   );
 }

@@ -83,128 +83,179 @@ export default function MenuItemsPage() {
     }
   }
 
-  if (loading) return <div className="p-6">Loading...</div>;
-
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Menu Items</h1>
+    <DashboardLayout
+      title="Menu Items"
+      actions={
         <Link
           href="/dashboard/items/new"
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          className="dashboard-button-primary flex items-center gap-2"
         >
+          <PlusIcon className="w-5 h-5" />
           Add New Item
         </Link>
-      </div>
-
-      <div className="mb-6">
-        <label className="block text-sm font-medium mb-1">
-          Filter by Store
-        </label>
-        <select
-          value={selectedStore}
-          onChange={(e) => setSelectedStore(e.target.value)}
-          className="w-full md:w-64 p-2 border rounded"
+      }
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="p-6"
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 bg-white rounded-xl shadow-md p-4"
         >
-          <option value="">All Stores</option>
-          {stores.map((store) => (
-            <option key={store.id} value={store.id}>
-              {store.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Item Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Store
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Category
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Price
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {items.map((item) => (
-              <tr key={item.id}>
-                <td className="px-6 py-4">
-                  <div>
-                    <p className="font-medium">{item.name}</p>
-                    {item.description && (
-                      <p className="text-sm text-gray-500">
-                        {item.description}
-                      </p>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4">{item.stores?.name}</td>
-                <td className="px-6 py-4">
-                  {item.categories?.name || "Uncategorized"}
-                </td>
-                <td className="px-6 py-4">
-                  ${parseFloat(item.price).toFixed(2)}
-                </td>
-                <td className="px-6 py-4">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs ${
-                      item.is_available
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {item.is_available ? "Available" : "Unavailable"}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="space-x-2">
-                    <Link
-                      href={`/dashboard/items/${item.id}/edit`}
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      Edit
-                    </Link>
-                    <button
-                      onClick={() =>
-                        toggleItemAvailability(item.id, item.is_available)
-                      }
-                      className={`${
-                        item.is_available
-                          ? "text-red-600 hover:text-red-900"
-                          : "text-green-600 hover:text-green-900"
-                      }`}
-                    >
-                      {item.is_available
-                        ? "Mark Unavailable"
-                        : "Mark Available"}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {items.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            No menu items found
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            <div className="relative flex-1">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search items..."
+                className="dashboard-input pl-10 w-full"
+              />
+            </div>
+            <div className="relative w-full md:w-64">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <BuildingStorefrontIcon className="h-5 w-5 text-gray-400" />
+              </div>
+              <select
+                value={selectedStore}
+                onChange={(e) => setSelectedStore(e.target.value)}
+                className="dashboard-input pl-10 w-full"
+              >
+                <option value="">All Stores</option>
+                {stores.map((store) => (
+                  <option key={store.id} value={store.id}>
+                    {store.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
+        </motion.div>
+
+        {loading ? (
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="animate-pulse bg-white/50 rounded-xl h-24 backdrop-blur-lg"
+              />
+            ))}
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="bg-white rounded-xl shadow-md overflow-hidden"
+          >
+            <table className="min-w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Item Details
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Store
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Category
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Price
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {items.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        {item.image_url && (
+                          <img
+                            src={item.image_url}
+                            alt={item.name}
+                            className="h-10 w-10 rounded-full object-cover mr-3"
+                          />
+                        )}
+                        <div>
+                          <div className="font-medium text-gray-900">
+                            {item.name}
+                          </div>
+                          {item.description && (
+                            <div className="text-sm text-gray-500">
+                              {item.description}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {item.stores?.name}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {item.categories?.name || "Uncategorized"}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      ${parseFloat(item.price).toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          item.is_available
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {item.is_available ? "Available" : "Unavailable"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      <div className="flex space-x-3">
+                        <Link
+                          href={`/dashboard/items/${item.id}/edit`}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          Edit
+                        </Link>
+                        <button
+                          onClick={() =>
+                            toggleItemAvailability(item.id, item.is_available)
+                          }
+                          className={`${
+                            item.is_available
+                              ? "text-red-600 hover:text-red-900"
+                              : "text-green-600 hover:text-green-900"
+                          }`}
+                        >
+                          {item.is_available
+                            ? "Mark Unavailable"
+                            : "Mark Available"}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {items.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                No menu items found
+              </div>
+            )}
+          </motion.div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </DashboardLayout>
   );
 }

@@ -2,6 +2,19 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import DashboardLayout from "../../components/DashboardLayout";
+import {
+  UserGroupIcon,
+  BuildingStorefrontIcon,
+  ShoppingBagIcon,
+  MapPinIcon,
+  DocumentTextIcon,
+  ArrowLeftIcon,
+  PlusIcon,
+  TrashIcon,
+  CurrencyDollarIcon,
+} from "@heroicons/react/24/outline";
 
 export default function NewOrderPage() {
   const router = useRouter();
@@ -177,160 +190,229 @@ export default function NewOrderPage() {
     }
   }
 
-  if (loading) return <div className="p-6">Loading...</div>;
+  const formFields = [
+    {
+      label: "Customer",
+      type: "select",
+      value: order.user_id,
+      onChange: (value) => setOrder({ ...order, user_id: value }),
+      icon: UserGroupIcon,
+      options: customers.map((customer) => ({
+        value: customer.id,
+        label: `${customer.full_name} (${customer.phone})`,
+      })),
+      required: true,
+    },
+    {
+      label: "Store",
+      type: "select",
+      value: order.store_id,
+      onChange: handleStoreChange,
+      icon: BuildingStorefrontIcon,
+      options: stores.map((store) => ({
+        value: store.id,
+        label: store.name,
+      })),
+      required: true,
+    },
+    {
+      label: "Delivery Address",
+      type: "textarea",
+      value: order.delivery_address,
+      onChange: (value) => setOrder({ ...order, delivery_address: value }),
+      icon: MapPinIcon,
+      required: true,
+    },
+    {
+      label: "Delivery Notes",
+      type: "textarea",
+      value: order.delivery_notes,
+      onChange: (value) => setOrder({ ...order, delivery_notes: value }),
+      icon: DocumentTextIcon,
+    },
+  ];
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Create New Order</h1>
-
-      <form onSubmit={handleSubmit} className="max-w-lg">
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Customer</label>
-          <select
-            value={order.user_id}
-            onChange={(e) => setOrder({ ...order, user_id: e.target.value })}
-            className="w-full p-2 border rounded"
-            required
-          >
-            <option value="">Select Customer</option>
-            {customers.map((customer) => (
-              <option key={customer.id} value={customer.id}>
-                {customer.full_name} ({customer.phone})
-              </option>
+    <DashboardLayout
+      title="Create New Order"
+      actions={
+        <button
+          onClick={() => router.push("/dashboard/orders")}
+          className="dashboard-button-secondary flex items-center gap-2"
+        >
+          <ArrowLeftIcon className="w-5 h-5" />
+          Back to Orders
+        </button>
+      }
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-3xl mx-auto p-6"
+      >
+        {loading ? (
+          <div className="space-y-4">
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className="animate-pulse bg-white/50 rounded-xl h-16 backdrop-blur-lg"
+              />
             ))}
-          </select>
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Store</label>
-          <select
-            value={order.store_id}
-            onChange={handleStoreChange}
-            className="w-full p-2 border rounded"
-            required
-          >
-            <option value="">Select Store</option>
-            {stores.map((store) => (
-              <option key={store.id} value={store.id}>
-                {store.name}
-              </option>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {formFields.map((field) => (
+              <motion.div
+                key={field.label}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="dashboard-card"
+              >
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {field.label}
+                </label>
+                <div className="relative rounded-md shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <field.icon className="h-5 w-5 text-gray-400" />
+                  </div>
+                  {field.type === "select" ? (
+                    <select
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      className="dashboard-input pl-10"
+                      required={field.required}
+                    >
+                      <option value="">Select {field.label}</option>
+                      {field.options.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <textarea
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      className="dashboard-input pl-10"
+                      rows={field.type === "textarea" ? 3 : 1}
+                      required={field.required}
+                    />
+                  )}
+                </div>
+              </motion.div>
             ))}
-          </select>
-        </div>
 
-        {order.store_id && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">
-              Order Items
-            </label>
-            {order.items.map((item, index) => (
-              <div key={index} className="flex gap-2 mb-2">
-                <select
-                  value={item.menu_item_id}
-                  onChange={(e) =>
-                    handleItemChange(index, "menu_item_id", e.target.value)
-                  }
-                  className="flex-1 p-2 border rounded"
-                  required
-                >
-                  <option value="">Select Item</option>
-                  {menuItems.map((menuItem) => (
-                    <option key={menuItem.id} value={menuItem.id}>
-                      {menuItem.name} (${menuItem.price})
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  min="1"
-                  value={item.quantity}
-                  onChange={(e) =>
-                    handleItemChange(
-                      index,
-                      "quantity",
-                      parseInt(e.target.value)
-                    )
-                  }
-                  className="w-20 p-2 border rounded"
-                  required
-                />
-                {order.items.length > 1 && (
+            {order.store_id && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="dashboard-card"
+              >
+                <div className="flex justify-between items-center mb-4">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Order Items
+                  </label>
                   <button
                     type="button"
-                    onClick={() => removeItem(index)}
-                    className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                    onClick={addItem}
+                    className="dashboard-button-secondary flex items-center gap-2"
                   >
-                    X
+                    <PlusIcon className="w-5 h-5" />
+                    Add Item
                   </button>
-                )}
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={addItem}
-              className="mt-2 text-blue-500 hover:text-blue-600"
+                </div>
+                <div className="space-y-4">
+                  {order.items.map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex gap-4 items-start p-4 bg-gray-50 rounded-lg"
+                    >
+                      <div className="flex-1">
+                        <select
+                          value={item.menu_item_id}
+                          onChange={(e) =>
+                            handleItemChange(
+                              index,
+                              "menu_item_id",
+                              e.target.value
+                            )
+                          }
+                          className="dashboard-input"
+                          required
+                        >
+                          <option value="">Select Item</option>
+                          {menuItems.map((menuItem) => (
+                            <option key={menuItem.id} value={menuItem.id}>
+                              {menuItem.name} (${menuItem.price})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="w-24">
+                        <input
+                          type="number"
+                          min="1"
+                          value={item.quantity}
+                          onChange={(e) =>
+                            handleItemChange(
+                              index,
+                              "quantity",
+                              parseInt(e.target.value)
+                            )
+                          }
+                          className="dashboard-input"
+                          required
+                        />
+                      </div>
+                      {order.items.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeItem(index)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          <TrashIcon className="w-5 h-5" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="dashboard-card"
             >
-              + Add Item
-            </button>
-          </div>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-700">
+                  Total Amount
+                </label>
+                <div className="flex items-center text-lg font-semibold">
+                  <CurrencyDollarIcon className="w-5 h-5 text-gray-400 mr-1" />
+                  {order.total_amount.toFixed(2)}
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="flex justify-end space-x-4"
+            >
+              <button
+                type="submit"
+                disabled={submitting}
+                className="dashboard-button-primary flex items-center gap-2"
+              >
+                <ShoppingBagIcon className="w-5 h-5" />
+                {submitting ? "Creating..." : "Create Order"}
+              </button>
+            </motion.div>
+          </form>
         )}
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Total Amount</label>
-          <input
-            type="text"
-            value={`$${order.total_amount.toFixed(2)}`}
-            className="w-full p-2 border rounded bg-gray-50"
-            disabled
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">
-            Delivery Address
-          </label>
-          <textarea
-            value={order.delivery_address}
-            onChange={(e) =>
-              setOrder({ ...order, delivery_address: e.target.value })
-            }
-            className="w-full p-2 border rounded"
-            rows={3}
-            required
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">
-            Delivery Notes
-          </label>
-          <textarea
-            value={order.delivery_notes}
-            onChange={(e) =>
-              setOrder({ ...order, delivery_notes: e.target.value })
-            }
-            className="w-full p-2 border rounded"
-            rows={2}
-          />
-        </div>
-
-        <div className="flex gap-4">
-          <button
-            type="submit"
-            disabled={submitting}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-300"
-          >
-            {submitting ? "Creating..." : "Create Order"}
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push("/dashboard/orders")}
-            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
-    </div>
+      </motion.div>
+    </DashboardLayout>
   );
 }
