@@ -9,6 +9,9 @@ import {
   PhoneIcon,
   MapPinIcon,
   ArrowLeftIcon,
+  CalendarIcon,
+  DocumentTextIcon,
+  UserCircleIcon,
 } from "@heroicons/react/24/outline";
 
 export default function NewCustomerPage() {
@@ -19,7 +22,13 @@ export default function NewCustomerPage() {
     full_name: "",
     email: "",
     phone: "",
-    address: "",
+    homeaddress: "",
+    workaddress: "",
+    city: "",
+    status: "active",
+    ordernote: "",
+    subscriptiondays: "",
+    subscriptionstart: "",
   });
 
   const formFields = [
@@ -47,11 +56,60 @@ export default function NewCustomerPage() {
       icon: PhoneIcon,
     },
     {
-      label: "Address",
+      label: "Home Address",
       type: "textarea",
-      value: customer.address,
-      onChange: (value) => setCustomer({ ...customer, address: value }),
+      value: customer.homeaddress,
+      onChange: (value) => setCustomer({ ...customer, homeaddress: value }),
       icon: MapPinIcon,
+    },
+    {
+      label: "Work Address",
+      type: "textarea",
+      value: customer.workaddress,
+      onChange: (value) => setCustomer({ ...customer, workaddress: value }),
+      icon: MapPinIcon,
+    },
+    {
+      label: "City",
+      type: "text",
+      value: customer.city,
+      onChange: (value) => setCustomer({ ...customer, city: value }),
+      icon: MapPinIcon,
+    },
+    {
+      label: "Status",
+      type: "select",
+      value: customer.status,
+      onChange: (value) => setCustomer({ ...customer, status: value }),
+      icon: UserCircleIcon,
+      options: [
+        { value: "active", label: "Active" },
+        { value: "inactive", label: "Inactive" },
+        { value: "pending", label: "Pending" },
+      ],
+    },
+    {
+      label: "Order Notes",
+      type: "textarea",
+      value: customer.ordernote,
+      onChange: (value) => setCustomer({ ...customer, ordernote: value }),
+      icon: DocumentTextIcon,
+    },
+    {
+      label: "Subscription Days",
+      type: "number",
+      value: customer.subscriptiondays,
+      onChange: (value) =>
+        setCustomer({ ...customer, subscriptiondays: value }),
+      icon: CalendarIcon,
+    },
+    {
+      label: "Subscription Start",
+      type: "date",
+      value: customer.subscriptionstart,
+      onChange: (value) =>
+        setCustomer({ ...customer, subscriptionstart: value }),
+      icon: CalendarIcon,
     },
   ];
 
@@ -92,16 +150,36 @@ export default function NewCustomerPage() {
               <div key={field.label} className="space-y-2">
                 <label className="text-sm font-semibold text-[#323130]">
                   {field.label}
+                  {field.required && <span className="text-red-500">*</span>}
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <field.icon className="h-5 w-5 text-[#605e5c]" />
-                  </div>
-                  {field.type === "textarea" ? (
+                  {field.icon && (
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <field.icon className="h-5 w-5 text-[#605e5c]" />
+                    </div>
+                  )}
+                  {field.type === "select" ? (
+                    <select
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      className={`block w-full rounded-md border border-[#8a8886] ${
+                        field.icon ? "pl-10" : "pl-3"
+                      } py-2 text-sm focus:border-[#0078d4] focus:ring-[#0078d4]`}
+                      required={field.required}
+                    >
+                      {field.options.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : field.type === "textarea" ? (
                     <textarea
                       value={field.value}
                       onChange={(e) => field.onChange(e.target.value)}
-                      className="block w-full rounded-md border border-[#8a8886] pl-10 py-2 text-sm focus:border-[#0078d4] focus:ring-[#0078d4]"
+                      className={`block w-full rounded-md border border-[#8a8886] ${
+                        field.icon ? "pl-10" : "pl-3"
+                      } py-2 text-sm focus:border-[#0078d4] focus:ring-[#0078d4]`}
                       rows={3}
                       required={field.required}
                     />
@@ -110,7 +188,9 @@ export default function NewCustomerPage() {
                       type={field.type}
                       value={field.value}
                       onChange={(e) => field.onChange(e.target.value)}
-                      className="block w-full rounded-md border border-[#8a8886] pl-10 py-2 text-sm focus:border-[#0078d4] focus:ring-[#0078d4]"
+                      className={`block w-full rounded-md border border-[#8a8886] ${
+                        field.icon ? "pl-10" : "pl-3"
+                      } py-2 text-sm focus:border-[#0078d4] focus:ring-[#0078d4]`}
                       required={field.required}
                     />
                   )}

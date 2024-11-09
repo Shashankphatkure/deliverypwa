@@ -103,30 +103,6 @@ export default function PaymentsPage() {
           ))}
         </div>
 
-        {/* Filters */}
-        <div className="flex gap-4 mb-6">
-          <div className="relative flex-1 max-w-xs">
-            <input
-              type="text"
-              placeholder="Search payments..."
-              className="dashboard-input pl-10 w-full"
-            />
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-          </div>
-          <select className="dashboard-input">
-            <option value="all">All Types</option>
-            <option value="salary">Salary</option>
-            <option value="bonus">Bonus</option>
-            <option value="penalty">Penalty</option>
-          </select>
-          <select className="dashboard-input">
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="completed">Completed</option>
-            <option value="failed">Failed</option>
-          </select>
-        </div>
-
         {/* Payments Table */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           {loading ? (

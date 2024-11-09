@@ -130,10 +130,16 @@ export default function CustomersPage() {
                     Phone
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Total Orders
+                    City
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Joined Date
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Subscription
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Total Orders
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Actions
@@ -146,10 +152,33 @@ export default function CustomersPage() {
                     <td className="px-6 py-4">{customer.full_name}</td>
                     <td className="px-6 py-4">{customer.email}</td>
                     <td className="px-6 py-4">{customer.phone || "N/A"}</td>
-                    <td className="px-6 py-4">{customer.orders.length}</td>
+                    <td className="px-6 py-4">{customer.city || "N/A"}</td>
                     <td className="px-6 py-4">
-                      {new Date(customer.created_at).toLocaleDateString()}
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          customer.status === "active"
+                            ? "bg-green-100 text-green-800"
+                            : customer.status === "inactive"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {customer.status || "N/A"}
+                      </span>
                     </td>
+                    <td className="px-6 py-4">
+                      {customer.subscriptionstart ? (
+                        <span>
+                          {new Date(
+                            customer.subscriptionstart
+                          ).toLocaleDateString()}
+                          ({customer.subscriptiondays} days)
+                        </span>
+                      ) : (
+                        "No subscription"
+                      )}
+                    </td>
+                    <td className="px-6 py-4">{customer.orders.length}</td>
                     <td className="px-6 py-4">
                       <div className="space-x-2">
                         <Link

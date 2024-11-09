@@ -129,6 +129,16 @@ create table users (
     updated_at timestamp with time zone default now()
 );
 
+-- Update users table (customers) with additional fields
+ALTER TABLE users
+ADD COLUMN homeaddress text,
+ADD COLUMN workaddress text,
+ADD COLUMN city text,
+ADD COLUMN status text,
+ADD COLUMN ordernote text,
+ADD COLUMN subscriptiondays bigint,
+ADD COLUMN subscriptionstart date;
+
 -- Restaurants/Stores table
 create table stores (
     id uuid primary key default uuid_generate_v4(),
