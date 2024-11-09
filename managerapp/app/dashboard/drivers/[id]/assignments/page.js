@@ -12,6 +12,9 @@ import {
   TruckIcon,
   MapPinIcon,
   PhoneIcon,
+  BuildingStorefrontIcon,
+  ClockIcon,
+  ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
 
 export default function DriverAssignmentsPage({ params }) {

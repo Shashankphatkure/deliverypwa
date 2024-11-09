@@ -9,6 +9,8 @@ import {
   DocumentTextIcon,
   ArrowLeftIcon,
   CalculatorIcon,
+  TruckIcon,
+  XCircleIcon,
 } from "@heroicons/react/24/outline";
 
 export default function NewPaymentPage() {
@@ -18,10 +20,13 @@ export default function NewPaymentPage() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [payment, setPayment] = useState({
-    driver_id: "",
-    amount: "",
-    payment_type: "salary",
-    description: "",
+    driverid: "",
+    finalamount: "",
+    totalkm: "",
+    totalorders: "",
+    advance: "",
+    penalty: "",
+    paymentstatus: "pending",
   });
 
   useEffect(() => {
@@ -32,7 +37,7 @@ export default function NewPaymentPage() {
     try {
       const { data, error } = await supabase
         .from("delivery_personnel")
-        .select("id, full_name, phone")
+        .select("email, full_name, phone")
         .eq("is_active", true);
 
       if (error) throw error;
@@ -54,8 +59,10 @@ export default function NewPaymentPage() {
         .insert([
           {
             ...payment,
-            status: "pending",
-            payment_date: new Date().toISOString(),
+            finalamount: Number(payment.finalamount),
+            totalorders: Number(payment.totalorders),
+            advance: Number(payment.advance) || 0,
+            penalty: Number(payment.penalty) || 0,
           },
         ]);
 
@@ -64,9 +71,9 @@ export default function NewPaymentPage() {
       await supabase.from("notifications").insert([
         {
           recipient_type: "driver",
-          recipient_id: payment.driver_id,
+          recipient_id: payment.driverid,
           title: "New Payment Processed",
-          message: `A ${payment.payment_type} payment of $${payment.amount} has been processed`,
+          message: `A payment of $${payment.finalamount} has been processed`,
           type: "payment",
         },
       ]);
@@ -84,44 +91,53 @@ export default function NewPaymentPage() {
     {
       label: "Driver",
       type: "select",
-      value: payment.driver_id,
-      onChange: (value) => setPayment({ ...payment, driver_id: value }),
+      value: payment.driverid,
+      onChange: (value) => setPayment({ ...payment, driverid: value }),
       icon: UserGroupIcon,
       options: drivers.map((driver) => ({
-        value: driver.id,
+        value: driver.email,
         label: `${driver.full_name} (${driver.phone})`,
       })),
       required: true,
     },
     {
-      label: "Amount",
+      label: "Final Amount",
       type: "number",
-      value: payment.amount,
-      onChange: (value) => setPayment({ ...payment, amount: value }),
+      value: payment.finalamount,
+      onChange: (value) => setPayment({ ...payment, finalamount: value }),
       icon: CalculatorIcon,
       prefix: "$",
       required: true,
     },
     {
-      label: "Payment Type",
-      type: "select",
-      value: payment.payment_type,
-      onChange: (value) => setPayment({ ...payment, payment_type: value }),
-      icon: BanknotesIcon,
-      options: [
-        { value: "salary", label: "Salary" },
-        { value: "bonus", label: "Bonus" },
-        { value: "penalty", label: "Penalty" },
-      ],
+      label: "Total KM",
+      type: "text",
+      value: payment.totalkm,
+      onChange: (value) => setPayment({ ...payment, totalkm: value }),
+      icon: TruckIcon,
       required: true,
     },
     {
-      label: "Description",
-      type: "textarea",
-      value: payment.description,
-      onChange: (value) => setPayment({ ...payment, description: value }),
+      label: "Total Orders",
+      type: "number",
+      value: payment.totalorders,
+      onChange: (value) => setPayment({ ...payment, totalorders: value }),
       icon: DocumentTextIcon,
       required: true,
+    },
+    {
+      label: "Advance",
+      type: "number",
+      value: payment.advance,
+      onChange: (value) => setPayment({ ...payment, advance: value }),
+      icon: BanknotesIcon,
+    },
+    {
+      label: "Penalty",
+      type: "number",
+      value: payment.penalty,
+      onChange: (value) => setPayment({ ...payment, penalty: value }),
+      icon: XCircleIcon,
     },
   ];
 

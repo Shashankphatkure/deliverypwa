@@ -29,7 +29,7 @@ export default function PaymentsPage() {
         .select(
           `
           *,
-          delivery_personnel:delivery_personnel(full_name)
+          delivery_personnel:delivery_personnel(full_name, email)
         `
         )
         .order("created_at", { ascending: false });
@@ -46,25 +46,25 @@ export default function PaymentsPage() {
   const paymentStats = [
     {
       title: "Total Payments",
-      value: `$${payments.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}`,
+      value: `$${payments.reduce((sum, p) => sum + (p.finalamount || 0), 0)}`,
       icon: BanknotesIcon,
       color: "blue",
     },
     {
       title: "Pending Payments",
-      value: payments.filter((p) => p.status === "pending").length,
+      value: payments.filter((p) => p.paymentstatus === "pending").length,
       icon: ClockIcon,
       color: "yellow",
     },
     {
       title: "Completed Payments",
-      value: payments.filter((p) => p.status === "completed").length,
+      value: payments.filter((p) => p.paymentstatus === "completed").length,
       icon: CheckCircleIcon,
       color: "green",
     },
     {
       title: "Failed Payments",
-      value: payments.filter((p) => p.status === "failed").length,
+      value: payments.filter((p) => p.paymentstatus === "failed").length,
       icon: XCircleIcon,
       color: "red",
     },
@@ -150,40 +150,46 @@ export default function PaymentsPage() {
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {payment.delivery_personnel.full_name}
+                            {payment.delivery_personnel?.full_name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {payment.delivery_personnel?.email}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        ${payment.amount.toFixed(2)}
+                        ${payment.finalamount}
+                      </div>
+                      {payment.advance > 0 && (
+                        <div className="text-xs text-gray-500">
+                          Advance: ${payment.advance}
+                        </div>
+                      )}
+                      {payment.penalty > 0 && (
+                        <div className="text-xs text-red-500">
+                          Penalty: ${payment.penalty}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm">
+                        <div>Orders: {payment.totalorders}</div>
+                        <div>Distance: {payment.totalkm}km</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          payment.payment_type === "salary"
-                            ? "bg-blue-100 text-blue-800"
-                            : payment.payment_type === "bonus"
+                          payment.paymentstatus === "completed"
                             ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {payment.payment_type}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          payment.status === "completed"
-                            ? "bg-green-100 text-green-800"
-                            : payment.status === "pending"
+                            : payment.paymentstatus === "pending"
                             ? "bg-yellow-100 text-yellow-800"
                             : "bg-red-100 text-red-800"
                         }`}
                       >
-                        {payment.status}
+                        {payment.paymentstatus}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
